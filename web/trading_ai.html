@@ -28,32 +28,30 @@
 <h1 class="text-light text d-flex justify-content-center align-items-center">Trading AI</h1>
 
 <div class="container">
+    <div class="row justify-content-center">
+        <div class="col-12 text-center">
+            <button id="ScanMarketBtn" class="btn btn-primary glow-on-hover scan-market-button w-100 my-2">SCAN MARKET</button>
 
-    <!-- Scan Market Button Container -->
-    <div class="scan-market-container">
-        <button id="ScanMarketBtn" class="glow-on-hover scan-market-button">SCAN MARKET</button>
-    </div>
-
-    <!-- Dropdown Container -->
-    <div class="dropdown">
-        <button class="btn btn-secondary dropdown-toggle glow-on-hover scan-market-button" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
-            Forex Pairs
-        </button>
-        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-            <li><a class="dropdown-item" href="#">BTC/USD</a></li>
-            <li><a class="dropdown-item" href="#">EUR/USD</a></li>
-            <li><a class="dropdown-item" href="#">USD/JPY</a></li>
-        </ul>
+            <div class="dropdown w-100">
+                <!-- Modified button with an ID -->
+                <button class="btn btn-secondary dropdown-toggle glow-on-hover scan-market-button w-100" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+                    Select Option
+                    <i class="bi bi-caret-down-fill"></i>
+                </button>
+                <ul class="dropdown-menu w-100" aria-labelledby="dropdownMenuButton1">
+                    <!-- Added onClick event to each dropdown item -->
+                    <li><a class="dropdown-item" href="#" onclick="updateButtonText('Option 1')">Option 1</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="updateButtonText('Option 2')">Option 2</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="updateButtonText('Option 3')">Option 3</a></li>
+                </ul>
+            </div>
+        </div>
     </div>
 
     <div class="chart-container">
         <h2>Charts</h2>
-        <!-- This is where charts will display -->
-        <!-- You can include canvas or other elements for charts here -->
+        <!-- Chart content -->
     </div>
-
-
-
 </div>
 
 <!-- Add your page content here -->

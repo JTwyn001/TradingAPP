@@ -16,7 +16,6 @@ body{
     z-index: 0;
     border-radius: 10px;
     padding: 0px;
-    margin-left: 10px;
 }
 
 .glow-on-hover:before {
