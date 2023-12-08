@@ -40,9 +40,9 @@
                 </button>
                 <ul class="dropdown-menu w-100" aria-labelledby="dropdownMenuButton1">
                     <!-- Added onClick event to each dropdown item -->
-                    <li><a class="dropdown-item" href="#" onclick="updateButtonText('Option 1')">Option 1</a></li>
-                    <li><a class="dropdown-item" href="#" onclick="updateButtonText('Option 2')">Option 2</a></li>
-                    <li><a class="dropdown-item" href="#" onclick="updateButtonText('Option 3')">Option 3</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="updateButtonText('EUR/USD (Euro/US dollar)')">EUR/USD (Euro/US dollar)</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="updateButtonText('USD/JPY (US dollar/Japanese yen)')">USD/JPY (US dollar/Japanese yen)</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="updateButtonText('GBP/USD (British pound/US dollar)')">GBP/USD (British pound/US dollar)</a></li>
                 </ul>
             </div>
         </div>
@@ -55,6 +55,14 @@
 </div>
 
 <!-- Add your page content here -->
+
+<script>
+    // JavaScript function to update button text while preserving the caret icon
+    function updateButtonText(text) {
+        var button = document.getElementById('dropdownMenuButton1');
+        button.innerHTML = text + ' <i class="bi bi-caret-down-fill"></i>';
+    }
+</script>
 <!--Jquery  -->
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
 
