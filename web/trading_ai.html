@@ -35,10 +35,12 @@
             <div class="dropdown w-100">
                 <!-- Modified button with an ID -->
                 <button class="btn btn-secondary glow-on-hover scan-market-button w-100" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
-                    Select Option
+                    Choose Instrument
                     <i class="bi bi-caret-down-fill"></i>
                 </button>
                 <ul class="dropdown-menu w-100" aria-labelledby="dropdownMenuButton1">
+                    <!-- Dropdown title -->
+                    <li><span class="dropdown-item disabled">Top 10 Scanned Instruments</span></li>
                     <!-- Added onClick event to each dropdown item -->
                     <li><a class="dropdown-item" href="#" onclick="updateButtonText('EUR/USD (Euro/US dollar)')">EUR/USD (Euro/US dollar)</a></li>
                     <li><a class="dropdown-item" href="#" onclick="updateButtonText('USD/JPY (US dollar/Japanese yen)')">USD/JPY (US dollar/Japanese yen)</a></li>
@@ -55,14 +57,6 @@
 </div>
 
 <!-- Add your page content here -->
-
-<script>
-    // JavaScript function to update button text while preserving the caret icon
-    function updateButtonText(text) {
-        var button = document.getElementById('dropdownMenuButton1');
-        button.innerHTML = text + ' <i class="bi bi-caret-down-fill"></i>';
-    }
-</script>
 <!--Jquery  -->
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
 
