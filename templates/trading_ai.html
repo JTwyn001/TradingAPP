@@ -19,9 +19,9 @@
             type="text/javascript"></script>
 
     <!-- Textillate  -->
-    <link rel="stylesheet" href="assets/vendore/textillate/animate.css">
+    <link rel="stylesheet" href="../static/assets/vendore/textillate/animate.css">
 
-    <link rel="stylesheet" href="trading_ai_style.css">
+    <link rel="stylesheet" href="../static/css/trading_ai_style.css">
 </head>
 
 <body>
@@ -54,7 +54,7 @@
         <h2>Charts</h2>
         <!-- Chart content -->
     </div>
-    <div class="account-info-container col-md-12 ">
+    <div class="account-info-container col-md-12 my-4">
 
         <div class="row d-flex justify-content-center">
             <h5 class="text-light text-center">ACCOUNT INFORMATION</h5>
@@ -71,6 +71,21 @@
         </div>
 
     </div>
+    <!-- Q/A Container -->
+    <div class="query-container my-4">
+        <div class="row">
+            <h5 class="text-light text-center">Instrument Analysis Chatbot Assistant</h5>
+            <div class="col-12">
+                <input type="text" id="userInput" class="form-control" placeholder="Enter your question">
+                <button id="submitQuery" class="glow-on-hover account-info-btn btn btn-primary mt-2">Submit</button>
+            </div>
+            <div class="col-12 mt-3">
+                <div id="outputSection" class="output-section">
+                    <!-- Responses will be displayed here -->
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Add your page content here -->
@@ -84,13 +99,12 @@
 
 
 <!-- Textillate js -->
-<script src="assets/vendore/textillate/jquery.fittext.js"></script>
-<script src="assets/vendore/textillate/jquery.lettering.js"></script>
+<script src="../static/assets/vendore/textillate/jquery.fittext.js"></script>
+<script src="../static/assets/vendore/textillate/jquery.lettering.js"></script>
 <script src="http://jschr.github.io/textillate/jquery.textillate.js"></script>
 
-<script src="main.js"></script>
-<script src="controller.js"></script>
-<script src="/eel.js"></script>
+<script src="../static/js/main.js"></script>
+<script src="../static/js/controller.js"></script>
 
 </body>
 </html>

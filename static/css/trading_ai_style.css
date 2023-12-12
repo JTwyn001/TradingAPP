@@ -122,8 +122,8 @@ body{
     width: 100%; /* Full width of its container */
 }
 
-
 /* End of scan-market-container styles */
+
 /* Start of account-information-container styles */
 .account-info-btn{
     width: 50%;
@@ -144,4 +144,22 @@ body{
     margin-left: 45%;
 }
 /* End of account-information-container styles */
+
+/* Start of Q/A container styles */
+.query-container {
+    /* Styling Q/A container here */
+    padding: 20px;
+    background-color: #181818a8;
+    border-radius: 8px;
+}
+
+.output-section {
+    /* Style for the output section */
+    background-color: #fff;
+    border: 1px solid #ddd;
+    padding: 15px;
+    border-radius: 4px;
+    min-height: 100px; /* Adjust as needed */
+}
+/* End of Q/A container styles */
 /* Start of trading-ai-html styles */
