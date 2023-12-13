@@ -18,9 +18,10 @@ $(document).ready(function() {
     };
 
     // Handling Q/A Submission
+    // Handling User Input Submission
     document.getElementById('submitQuery').addEventListener('click', function() {
         var userInput = document.getElementById('userInput').value;
-        fetch('/process_chat', {
+        fetch('/process_user_input', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -29,11 +30,13 @@ $(document).ready(function() {
         })
             .then(response => response.json())
             .then(data => {
-                document.getElementById('outputSection').innerHTML = JSON.stringify(data);
+                // Display the response in your outputSection
+                document.getElementById('outputSection').innerHTML = data.response;
             })
             .catch((error) => {
                 console.error('Error:', error);
             });
     });
+
 
 });

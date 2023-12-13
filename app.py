@@ -1,3 +1,5 @@
+import json
+
 from flask import Flask, request, jsonify, session, render_template
 import os
 import platform
@@ -225,19 +227,20 @@ available_functions = {
 }
 
 
-@app.route('/process_chat', methods=['POST'])
-def process_chat():
+@app.route('/process_user_input', methods=['POST'])
+def process_user_input():
+    data = request.json
+    user_input = data.get('user_input')
+
+    # Initialize messages session if not present
+    if 'messages' not in session:
+        session['messages'] = []
+
+    # Append user input to session messages
+    session['messages'].append({'role': 'user', 'content': user_input})
+
     try:
-        data = request.json
-        user_input = data['user_input']
-
-        # Logic to handle the chat
-        # Replace the Streamlit session state with a server-side storage, e.g., a simple list
-        if 'messages' not in session:
-            session['messages'] = []
-
-        session['messages'].append({'role': 'user', 'content': user_input})
-
+        # Process the input using OpenAI's ChatCompletion
         response = openai.ChatCompletion.create(
             model='gpt-3.5-turbo-0613',
             messages=session['messages'],
@@ -245,8 +248,49 @@ def process_chat():
             function_call='auto'
         )
 
-        # Process the response and return it
-        return jsonify(response)
+        # Extract and handle the response
+        response_message = response['choices'][0]['message']
+
+        # Check if a function call is required
+        if response_message.get('function_call'):
+            function_name = response_message['function_call']['name']
+            function_args = json.loads(response_message['function_call']['arguments'])
+
+            # Dictionary for function arguments
+            args_dict = {}
+            if function_name in ['get_stock_price', 'calculate_RSI', 'calculate_MACD', 'plot_stock_price']:
+                args_dict['ticker'] = function_args.get('ticker')
+            elif function_name in ['calculate_SMA', 'calculate_EMA']:
+                args_dict['ticker'] = function_args.get('ticker')
+                args_dict['window'] = function_args.get('window')
+
+            # Call the corresponding function
+            function_to_call = available_functions[function_name]
+            function_response = function_to_call(**args_dict)
+
+            # Append function response to messages
+            session['messages'].append(
+                {
+                    'role': 'function',
+                    'name': function_name,
+                    'content': function_response
+                }
+            )
+
+            # Get a follow-up response from OpenAI
+            second_response = openai.ChatCompletion.create(
+                model='gpt-3.5-turbo-0613',
+                messages=session['messages']
+            )
+
+            # Return the final response
+            final_response = second_response['choices'][0]['message']['content']
+            return jsonify({'response': final_response})
+
+        else:
+            # Append the assistant's response to messages
+            session['messages'].append({'role': 'assistant', 'content': response_message['content']})
+            return jsonify({'response': response_message['content']})
 
     except Exception as e:
         return jsonify({'error': str(e)})
