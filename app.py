@@ -13,6 +13,8 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 # Initialize the Flask app and set the template folder
 app = Flask(__name__, static_folder='static', template_folder='templates')
 
+# Set a secret key for session handling
+app.secret_key = os.urandom(24)  # Generates a random key
 
 @app.route('/')
 def index():
@@ -232,15 +234,12 @@ def process_user_input():
     data = request.json
     user_input = data.get('user_input')
 
-    # Initialize messages session if not present
     if 'messages' not in session:
         session['messages'] = []
 
-    # Append user input to session messages
     session['messages'].append({'role': 'user', 'content': user_input})
 
     try:
-        # Process the input using OpenAI's ChatCompletion
         response = openai.ChatCompletion.create(
             model='gpt-3.5-turbo-0613',
             messages=session['messages'],
@@ -248,27 +247,19 @@ def process_user_input():
             function_call='auto'
         )
 
-        # Extract and handle the response
         response_message = response['choices'][0]['message']
 
-        # Check if a function call is required
         if response_message.get('function_call'):
             function_name = response_message['function_call']['name']
             function_args = json.loads(response_message['function_call']['arguments'])
 
-            # Dictionary for function arguments
             args_dict = {}
-            if function_name in ['get_stock_price', 'calculate_RSI', 'calculate_MACD', 'plot_stock_price']:
-                args_dict['ticker'] = function_args.get('ticker')
-            elif function_name in ['calculate_SMA', 'calculate_EMA']:
-                args_dict['ticker'] = function_args.get('ticker')
-                args_dict['window'] = function_args.get('window')
+            for key, value in function_args.items():
+                args_dict[key] = value
 
-            # Call the corresponding function
             function_to_call = available_functions[function_name]
             function_response = function_to_call(**args_dict)
 
-            # Append function response to messages
             session['messages'].append(
                 {
                     'role': 'function',
@@ -277,18 +268,14 @@ def process_user_input():
                 }
             )
 
-            # Get a follow-up response from OpenAI
             second_response = openai.ChatCompletion.create(
                 model='gpt-3.5-turbo-0613',
                 messages=session['messages']
             )
 
-            # Return the final response
             final_response = second_response['choices'][0]['message']['content']
             return jsonify({'response': final_response})
-
         else:
-            # Append the assistant's response to messages
             session['messages'].append({'role': 'assistant', 'content': response_message['content']})
             return jsonify({'response': response_message['content']})
 

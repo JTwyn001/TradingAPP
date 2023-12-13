@@ -17,10 +17,13 @@ $(document).ready(function() {
         button.innerHTML = text + ' <i class="bi bi-caret-down-fill"></i>';
     };
 
-    // Handling Q/A Submission
     // Handling User Input Submission
     document.getElementById('submitQuery').addEventListener('click', function() {
         var userInput = document.getElementById('userInput').value;
+        // Clear the input field after getting the value
+        document.getElementById('userInput').value = '';
+
+        // Fetch request to Flask backend
         fetch('/process_user_input', {
             method: 'POST',
             headers: {
@@ -28,15 +31,23 @@ $(document).ready(function() {
             },
             body: JSON.stringify({ 'user_input': userInput }),
         })
-            .then(response => response.json())
-            .then(data => {
+        .then(response => response.json())
+        .then(data => {
+            // Ensure that 'response' key exists in the data
+            if(data.response) {
                 // Display the response in your outputSection
                 document.getElementById('outputSection').innerHTML = data.response;
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-            });
+            } else {
+                // Handle the case where 'response' key doesn't exist
+                console.error('Response key not found in data');
+                document.getElementById('outputSection').innerHTML = 'An error occurred.';
+            }
+        })
+        .catch((error) => {
+            // Handle any errors that occurred during fetch
+            console.error('Error:', error);
+            document.getElementById('outputSection').innerHTML = 'Error fetching data: ' + error.message;
+        });
     });
-
 
 });
