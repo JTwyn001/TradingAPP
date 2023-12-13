@@ -20,7 +20,7 @@ $(document).ready(function() {
     // Handling Q/A Submission
     document.getElementById('submitQuery').addEventListener('click', function() {
         var userInput = document.getElementById('userInput').value;
-        fetch('/process_user_input', {
+        fetch('/process_chat', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -36,22 +36,4 @@ $(document).ready(function() {
             });
     });
 
-    // Handling Chat Submission
-    document.getElementById('submitChat').addEventListener('click', function() {
-        var chatInput = document.getElementById('chatInput').value;
-        fetch('/process_chat', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ 'user_input': chatInput }),
-        })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('chatOutput').innerHTML = JSON.stringify(data);
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-            });
-    });
 });
