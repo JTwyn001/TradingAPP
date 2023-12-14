@@ -298,8 +298,7 @@ def open_browser():
         webbrowser.open_new(url)
 
 
-# Open the browser
-
 if __name__ == '__main__':
+    # Open the browser
     open_browser()
     app.run(debug=True, port=9000)  # Changed Flask to run on port 8000

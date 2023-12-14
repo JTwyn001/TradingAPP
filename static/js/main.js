@@ -23,7 +23,7 @@ $(document).ready(function() {
         // Clear the input field after getting the value
 
         // Fetch request to Flask backend
-        fetch('/process_user_input', {
+        fetch('http://localhost:9000/process_user_input', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -42,7 +42,7 @@ $(document).ready(function() {
             } else {
                 // Handle the case where 'response' key doesn't exist
                 console.error('Response key not found in data');
-                document.getElementById('outputSection').innerHTML = 'An error occurred.';
+                document.getElementById('outputSection').innerHTML = 'An error occurred.' + error.message;
             }
         })
         .catch((error) => {
