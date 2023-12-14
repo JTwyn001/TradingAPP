@@ -21,7 +21,6 @@ $(document).ready(function() {
     document.getElementById('submitQuery').addEventListener('click', function() {
         var userInput = document.getElementById('userInput').value;
         // Clear the input field after getting the value
-        document.getElementById('userInput').value = '';
 
         // Fetch request to Flask backend
         fetch('/process_user_input', {
@@ -33,6 +32,9 @@ $(document).ready(function() {
         })
         .then(response => response.json())
         .then(data => {
+            //debug
+            console.log("Received data:", data); // Log the received data
+
             // Ensure that 'response' key exists in the data
             if(data.response) {
                 // Display the response in your outputSection

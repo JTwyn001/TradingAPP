@@ -1,6 +1,7 @@
 import json
 
 from flask import Flask, request, jsonify, session, render_template
+from flask_cors import CORS
 import os
 import platform
 import openai
@@ -12,9 +13,10 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # Initialize the Flask app and set the template folder
 app = Flask(__name__, static_folder='static', template_folder='templates')
-
+CORS(app)
 # Set a secret key for session handling
-app.secret_key = os.urandom(24)  # Generates a random key
+app.secret_key = 'algotradingproject'  # Generates a random key
+
 
 @app.route('/')
 def index():
@@ -232,6 +234,8 @@ available_functions = {
 @app.route('/process_user_input', methods=['POST'])
 def process_user_input():
     data = request.json
+    # debug
+    print("Received data:", data)  # Log incoming data
     user_input = data.get('user_input')
 
     if 'messages' not in session:
@@ -284,17 +288,18 @@ def process_user_input():
 
 
 def open_browser():
-    url = "http://localhost:5000/index.html"
+    url = "http://localhost:9000/"
     if platform.system() == "Windows":
         os.system(f'start msedge.exe --app="{url}"')
     elif platform.system() == "Darwin":  # macOS
         os.system(f'open -a "Microsoft Edge" "{url}"')
     else:
-        webbrowser.open(url)
+        # For other platforms, like Linux, adjust as necessary
+        webbrowser.open_new(url)
 
 
 # Open the browser
 
 if __name__ == '__main__':
     open_browser()
-    app.run(debug=True, port=5000)  # Changed Flask to run on port 5000
+    app.run(debug=True, port=9000)  # Changed Flask to run on port 8000
