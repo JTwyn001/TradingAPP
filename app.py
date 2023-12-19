@@ -29,6 +29,7 @@ equity = mt.account_info().equity
 num_symbols = mt.symbols_total()
 symbols = mt.symbols_get()
 symbol_info = mt.symbol_info("BTCUSD")._asdict()
+symbol_price = mt.symbol_info_tick("BTCUSD")._asdict()
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
