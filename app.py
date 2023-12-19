@@ -24,6 +24,8 @@ server = 'ICMarketsSC-Demo'
 mt.login(login, password, server)
 
 account_info = mt.account_info()
+balance = mt.account_info().balance
+equity = mt.account_info().equity
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
