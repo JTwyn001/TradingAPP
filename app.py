@@ -26,6 +26,9 @@ mt.login(login, password, server)
 account_info = mt.account_info()
 balance = mt.account_info().balance
 equity = mt.account_info().equity
+num_symbols = mt.symbols_total()
+symbols = mt.symbols_get()
+symbol_info = mt.symbol_info("BTCUSD")._asdict()
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
