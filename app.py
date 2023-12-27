@@ -1,41 +1,19 @@
 import json
 
 from flask import Flask, request, jsonify, session, render_template
-from flask_cors import CORS
+# from flask_cors import CORS
 import os
-import MetaTrader5 as mt
-import pandas as pd
-
 import platform
 import openai
 import webbrowser
 import matplotlib.pyplot as plt
 import yfinance as yf
 
-mt.initialize()
-
-if mt.initialize():
-    print('Connected to MetaTrader5')
-
-login = 51439669
-password = 'et8eMdvJ'
-server = 'ICMarketsSC-Demo'
-
-mt.login(login, password, server)
-
-account_info = mt.account_info()
-balance = mt.account_info().balance
-equity = mt.account_info().equity
-num_symbols = mt.symbols_total()
-symbols = mt.symbols_get()
-symbol_info = mt.symbol_info("BTCUSD")._asdict()
-symbol_price = mt.symbol_info_tick("BTCUSD")._asdict()
-
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # Initialize the Flask app and set the template folder
 app = Flask(__name__, static_folder='static', template_folder='templates')
-CORS(app)
+# CORS(app)
 # Set a secret key for session handling
 app.secret_key = 'algotradingproject'  # Generates a random key
 
