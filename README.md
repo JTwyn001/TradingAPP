@@ -1,2 +1,0 @@
-# TradingAPP
-Dissertation GUI
