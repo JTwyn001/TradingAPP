@@ -4,12 +4,22 @@ from flask import Flask, request, jsonify, session, render_template
 # from flask_cors import CORS
 import os
 import platform
+import MetaTrader5 as mt
 import openai
 import webbrowser
 import matplotlib.pyplot as plt
 import yfinance as yf
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
+
+mt.initialize()
+
+if mt.initialize():
+    print('Connected to MetaTrader5')
+
+login = 51439669
+password = 'et8eMdvJ'
+server = 'ICMarketsSC-Demo'
 
 # Initialize the Flask app and set the template folder
 app = Flask(__name__, static_folder='static', template_folder='templates')
