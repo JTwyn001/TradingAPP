@@ -4,6 +4,7 @@ from flask import Flask, request, jsonify, session, render_template
 # from flask_cors import CORS
 import os
 import platform
+import pandas as pd
 import MetaTrader5 as mt
 import openai
 import webbrowser
@@ -20,6 +21,9 @@ if mt.initialize():
 login = 51439669
 password = 'et8eMdvJ'
 server = 'ICMarketsSC-Demo'
+
+account_info = mt.account_info()
+print(account_info)
 
 # Initialize the Flask app and set the template folder
 app = Flask(__name__, static_folder='static', template_folder='templates')
