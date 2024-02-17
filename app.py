@@ -4,8 +4,6 @@ from flask import Flask, request, jsonify, session, render_template
 # from flask_cors import CORS
 import os
 import platform
-import pandas as pd
-import MetaTrader5 as mt
 import openai
 import webbrowser
 import matplotlib.pyplot as plt
@@ -13,50 +11,11 @@ import yfinance as yf
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-mt.initialize()
-
-if mt.initialize():
-    print('Connected to MetaTrader5')
-
-login = 51439669
-password = 'et8eMdvJ'
-server = 'ICMarketsSC-Demo'
-
-account_info = mt.account_info()
-print(account_info)
-
 # Initialize the Flask app and set the template folder
 app = Flask(__name__, static_folder='static', template_folder='templates')
 # CORS(app)
 # Set a secret key for session handling
 app.secret_key = 'algotradingproject'  # Generates a random key
-
-# Sending Market Order Crossover Strategy *1
-def market_order(symbol, volume, order_type, deviation, magic, stoploss, takeprofit):
-    tick = mt.symbol_info_tick(symbol)
-
-    order_dict = {'buy': 0, 'sell': 1}
-    price_dict = {'buy': tick.ask, 'sell': tick.bid}
-
-    request = {
-        "action": mt.TRADE_ACTION_DEAL,
-        "symbol": symbol,
-        "volume": volume,
-        "type": order_dict[order_type],
-        "price": price_dict[order_type],
-        "deviation": deviation,
-        "magic": magic,
-        "sl": stoploss,
-        "tp": takeprofit,
-        "comment": "python market order",
-        "type_time": mt.ORDER_TIME_GTC,
-        "type_filling": mt.ORDER_FILLING_IOC,
-    }
-
-    order_result = mt.order_send(request)
-    print(order_result)
-
-    return order_result
 
 
 @app.route('/')
