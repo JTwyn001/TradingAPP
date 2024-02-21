@@ -1,3 +1,9 @@
+// JavaScript function to update button text
+function updateButtonText(text) {
+    var button = document.getElementById('dropdownMenuButton1');
+    button.innerHTML = text + ' <i class="bi bi-caret-down-fill"></i>';
+};
+
 $(document).ready(function() {
 
     $('.text').textillate({
@@ -11,11 +17,24 @@ $(document).ready(function() {
         },
     });
 
-    // JavaScript function to update button text
-    function updateButtonText(text) {
-        var button = document.getElementById('dropdownMenuButton1');
-        button.innerHTML = text + ' <i class="bi bi-caret-down-fill"></i>';
-    };
+    document.addEventListener('DOMContentLoaded', function() {
+        // Query all dropdown items
+        var items = document.querySelectorAll('.dropdown-item');
+        items.forEach(function(item) {
+            item.addEventListener('click', function() {
+                var text = this.innerText; // 'this' refers to the item clicked
+                updateButtonText(text);
+            });
+        });
+    });
+
+    // Attach click event listeners to dropdown items
+    $('.dropdown-item').click(function() {
+        // 'this' refers to the clicked .dropdown-item element
+        var text = $(this).text();  // Using jQuery to get the text
+        updateButtonText(text);
+    });
+
 
     // Handling User Input Submission
     document.getElementById('submitQuery').addEventListener('click', function() {

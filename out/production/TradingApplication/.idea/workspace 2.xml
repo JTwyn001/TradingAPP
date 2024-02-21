@@ -2,44 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="d0b96371-010e-4b42-bb1d-524ead40fc9e" name="Changes" comment="Button fix.">
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/jsLibraryMappings.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/TradingApplication.iml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/TradingApplication/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/TradingApplication/.idea/workspace.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/TradingApplication/README.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/TradingApplication/TradingApplication.iml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/TradingApplication/app.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/TradingApplication/static/assets/logo/OIP.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/TradingApplication/static/assets/vendore/textillate/animate.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/TradingApplication/static/assets/vendore/textillate/jquery.fittext.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/TradingApplication/static/assets/vendore/textillate/jquery.lettering.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/TradingApplication/static/assets/vendore/textillate/style.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/TradingApplication/static/css/style.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/TradingApplication/static/css/trading_ai_style.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/TradingApplication/static/js/controller.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/TradingApplication/static/js/main.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/TradingApplication/static/js/script.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/TradingApplication/templates/index.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/TradingApplication/templates/trading_ai.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/assets/logo/OIP.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/assets/vendore/textillate/animate.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/assets/vendore/textillate/jquery.fittext.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/assets/vendore/textillate/jquery.lettering.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/assets/vendore/textillate/style.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/css/style.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/css/trading_ai_style.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/js/controller.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/js/main.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/js/script.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/index.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/trading_ai.html" beforeDir="false" />
+      <change afterPath="$PROJECT_DIR$/test.ipynb" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test1.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -89,7 +53,6 @@
 }</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$" />
       <recent name="$PROJECT_DIR$/web/assets/logo" />
       <recent name="$PROJECT_DIR$/web/assets/vendore/texllate" />
     </key>
@@ -130,7 +93,6 @@
       <workItem from="1704229646752" duration="378000" />
       <workItem from="1708135866430" duration="8472000" />
       <workItem from="1708541094923" duration="497000" />
-      <workItem from="1708542123495" duration="354000" />
     </task>
     <task id="LOCAL-00001" summary="Dissertation GUI commit">
       <created>1700265480605</created>
