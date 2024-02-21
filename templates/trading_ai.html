@@ -42,9 +42,9 @@
                     <!-- Dropdown title -->
                     <li><span class="dropdown-item disabled">Top 10 Scanned Instruments</span></li>
                     <!-- Added onClick event to each dropdown item -->
-                    <li><a class="dropdown-item" href="#" onclick="updateButtonText('EUR/USD (Euro/US dollar)')">EUR/USD (Euro/US dollar)</a></li>
-                    <li><a class="dropdown-item" href="#" onclick="updateButtonText('USD/JPY (US dollar/Japanese yen)')">USD/JPY (US dollar/Japanese yen)</a></li>
-                    <li><a class="dropdown-item" href="#" onclick="updateButtonText('GBP/USD (British pound/US dollar)')">GBP/USD (British pound/US dollar)</a></li>
+                    <li><a class="dropdown-item" href="#">EUR/USD (Euro/US dollar)</a></li>
+                    <li><a class="dropdown-item" href="#">USD/JPY (US dollar/Japanese yen)</a></li>
+                    <li><a class="dropdown-item" href="#">GBP/USD (British pound/US dollar)</a></li>
                 </ul>
             </div>
         </div>
@@ -103,7 +103,7 @@
 <script src="../static/assets/vendore/textillate/jquery.lettering.js"></script>
 <script src="http://jschr.github.io/textillate/jquery.textillate.js"></script>
 
-<script src="../static/js/main.js"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
 <script src="../static/js/controller.js"></script>
 
 </body>
