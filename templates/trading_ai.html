@@ -42,9 +42,9 @@
                     <!-- Dropdown title -->
                     <li><span class="dropdown-item disabled">Top 10 Scanned Instruments</span></li>
                     <!-- Added onClick event to each dropdown item -->
-                    <li><a class="dropdown-item" href="#">EUR/USD (Euro/US dollar)</a></li>
-                    <li><a class="dropdown-item" href="#">USD/JPY (US dollar/Japanese yen)</a></li>
-                    <li><a class="dropdown-item" href="#">GBP/USD (British pound/US dollar)</a></li>
+                    {% for stock in top_10_stocks %}
+                    <li><a class="dropdown-item" href="#">{{ stock }}</a></li>
+                    {% endfor %}
                 </ul>
             </div>
         </div>

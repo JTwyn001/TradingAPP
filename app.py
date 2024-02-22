@@ -5,11 +5,18 @@ from flask import Flask, request, jsonify, session, render_template
 import os
 import platform
 from openai import OpenAI
-
+import numpy as np  # The Numpy numerical computing library
+import pandas as pd  # The Pandas data science library
+import requests  # The requests library for HTTP requests in Python
+import xlsxwriter  # The XlsxWriter library for
+import math  # The Python math module
+from scipy import stats  # The SciPy stats module
 
 import webbrowser
 import matplotlib.pyplot as plt
 import yfinance as yf
+
+stocks = pd.read_csv('sp_500_stocks.csv')
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 # Initialize the Flask app and set the template folder
@@ -26,7 +33,9 @@ def index():
 
 @app.route('/trading-ai')
 def trading_ai():
-    return render_template('trading_ai.html')
+    sp500_stocks = pd.read_csv('sp_500_stocks.csv')
+    top_10_stocks = sp500_stocks['Ticker'].head(10).tolist()  # Assuming the column name is 'Ticker'
+    return render_template('trading_ai.html', top_10_stocks=top_10_stocks)
 
 
 def calculate_get_stock_price(ticker):

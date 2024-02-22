@@ -1,46 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="d0b96371-010e-4b42-bb1d-524ead40fc9e" name="Changes" comment="Button fix.">
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/jsLibraryMappings.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/TradingApplication.iml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/TradingApplication/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/TradingApplication/.idea/workspace.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/TradingApplication/README.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/TradingApplication/TradingApplication.iml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/TradingApplication/app.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/TradingApplication/static/assets/logo/OIP.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/TradingApplication/static/assets/vendore/textillate/animate.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/TradingApplication/static/assets/vendore/textillate/jquery.fittext.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/TradingApplication/static/assets/vendore/textillate/jquery.lettering.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/TradingApplication/static/assets/vendore/textillate/style.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/TradingApplication/static/css/style.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/TradingApplication/static/css/trading_ai_style.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/TradingApplication/static/js/controller.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/TradingApplication/static/js/main.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/TradingApplication/static/js/script.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/TradingApplication/templates/index.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/TradingApplication/templates/trading_ai.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/assets/logo/OIP.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/assets/vendore/textillate/animate.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/assets/vendore/textillate/jquery.fittext.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/assets/vendore/textillate/jquery.lettering.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/assets/vendore/textillate/style.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/css/style.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/css/trading_ai_style.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/js/controller.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/js/main.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/js/script.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/index.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/trading_ai.html" beforeDir="false" />
-    </list>
+    <list default="true" id="d0b96371-010e-4b42-bb1d-524ead40fc9e" name="Changes" comment="Refractor." />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -130,7 +91,7 @@
       <workItem from="1704229646752" duration="378000" />
       <workItem from="1708135866430" duration="8472000" />
       <workItem from="1708541094923" duration="497000" />
-      <workItem from="1708542123495" duration="354000" />
+      <workItem from="1708542123495" duration="2957000" />
     </task>
     <task id="LOCAL-00001" summary="Dissertation GUI commit">
       <created>1700265480605</created>
@@ -356,7 +317,14 @@
       <option name="project" value="LOCAL" />
       <updated>1708477960931</updated>
     </task>
-    <option name="localTasksCounter" value="33" />
+    <task id="LOCAL-00033" summary="Refractor.">
+      <created>1708559044726</created>
+      <option name="number" value="00033" />
+      <option name="presentableId" value="LOCAL-00033" />
+      <option name="project" value="LOCAL" />
+      <updated>1708559044726</updated>
+    </task>
+    <option name="localTasksCounter" value="34" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -379,7 +347,8 @@
     <MESSAGE value="Trading AI page commit." />
     <MESSAGE value="integrating front and backend." />
     <MESSAGE value="Button fix." />
-    <option name="LAST_COMMIT_MESSAGE" value="Button fix." />
+    <MESSAGE value="Refractor." />
+    <option name="LAST_COMMIT_MESSAGE" value="Refractor." />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/TradingApplication$TradeBot.coverage" NAME="TradeBot Coverage Results" MODIFIED="1702264345156" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />

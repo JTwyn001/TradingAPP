@@ -5,6 +5,12 @@ from flask import Flask, request, jsonify, session, render_template
 import os
 import platform
 from openai import OpenAI
+import numpy as np #The Numpy numerical computing library
+import pandas as pd #The Pandas data science library
+import requests #The requests library for HTTP requests in Python
+import xlsxwriter #The XlsxWriter library for
+import math #The Python math module
+from scipy import stats #The SciPy stats module
 
 
 import webbrowser
