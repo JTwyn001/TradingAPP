@@ -5,18 +5,11 @@ from flask import Flask, request, jsonify, session, render_template
 import os
 import platform
 from openai import OpenAI
-import numpy as np  # The Numpy numerical computing library
-import pandas as pd  # The Pandas data science library
-import requests  # The requests library for HTTP requests in Python
-import xlsxwriter  # The XlsxWriter library for
-import math  # The Python math module
-from scipy import stats  # The SciPy stats module
+
 
 import webbrowser
 import matplotlib.pyplot as plt
 import yfinance as yf
-
-stocks = pd.read_csv('sp_500_stocks.csv')
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 # Initialize the Flask app and set the template folder
@@ -33,34 +26,7 @@ def index():
 
 @app.route('/trading-ai')
 def trading_ai():
-    sp500_stocks = pd.read_csv('sp_500_stocks.csv')
-    top_10_stocks = sp500_stocks['Ticker'].head(10).tolist()  # Assuming the column name is 'Ticker'
-    return render_template('trading_ai.html', top_10_stocks=top_10_stocks)
-
-
-@app.route('/get_data/<symbol>')
-def get_data(symbol):
-    try:
-        # Fetch historical data for the symbol from Yahoo Finance
-        data = yf.download(symbol, period="1d", interval="1m")
-        # Convert the data to a list of dictionaries for JSON response
-        response_data = data.reset_index().to_dict('records')
-        return jsonify(response_data)
-    except Exception as e:
-        return jsonify({'error': str(e)})
-
-
-def get_top_10_momentum_stocks():
-    # Your strategy code here, modified to return only the top 10 stocks
-    # For example:
-    top_10_stocks = final_dataframe['Ticker'].head(10).tolist()
-    return top_10_stocks
-
-
-@app.route('/scan-market')
-def scan_market():
-    top_10_stocks = get_top_10_momentum_stocks()
-    return jsonify(top_10_stocks)
+    return render_template('trading_ai.html')
 
 
 def calculate_get_stock_price(ticker):

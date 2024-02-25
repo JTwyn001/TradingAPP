@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="d0b96371-010e-4b42-bb1d-524ead40fc9e" name="Changes" comment="Button fix.">
-      <change afterPath="$PROJECT_DIR$/test.ipynb" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/test1.py" afterDir="false" />
+    <list default="true" id="d0b96371-010e-4b42-bb1d-524ead40fc9e" name="Changes" comment="Added S&amp;P 500 stock list for filtering.">
+      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/css/trading_ai_style.css" beforeDir="false" afterPath="$PROJECT_DIR$/static/css/trading_ai_style.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/js/main.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/js/main.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/trading_ai.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/trading_ai.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -53,6 +55,7 @@
 }</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
       <recent name="$PROJECT_DIR$/web/assets/logo" />
       <recent name="$PROJECT_DIR$/web/assets/vendore/texllate" />
     </key>
@@ -93,6 +96,8 @@
       <workItem from="1704229646752" duration="378000" />
       <workItem from="1708135866430" duration="8472000" />
       <workItem from="1708541094923" duration="497000" />
+      <workItem from="1708542123495" duration="7095000" />
+      <workItem from="1708831297454" duration="10308000" />
     </task>
     <task id="LOCAL-00001" summary="Dissertation GUI commit">
       <created>1700265480605</created>
@@ -318,7 +323,21 @@
       <option name="project" value="LOCAL" />
       <updated>1708477960931</updated>
     </task>
-    <option name="localTasksCounter" value="33" />
+    <task id="LOCAL-00033" summary="Refractor.">
+      <created>1708559044726</created>
+      <option name="number" value="00033" />
+      <option name="presentableId" value="LOCAL-00033" />
+      <option name="project" value="LOCAL" />
+      <updated>1708559044726</updated>
+    </task>
+    <task id="LOCAL-00034" summary="Added S&amp;P 500 stock list for filtering.">
+      <created>1708562483933</created>
+      <option name="number" value="00034" />
+      <option name="presentableId" value="LOCAL-00034" />
+      <option name="project" value="LOCAL" />
+      <updated>1708562483933</updated>
+    </task>
+    <option name="localTasksCounter" value="35" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -341,10 +360,12 @@
     <MESSAGE value="Trading AI page commit." />
     <MESSAGE value="integrating front and backend." />
     <MESSAGE value="Button fix." />
-    <option name="LAST_COMMIT_MESSAGE" value="Button fix." />
+    <MESSAGE value="Refractor." />
+    <MESSAGE value="Added S&amp;P 500 stock list for filtering." />
+    <option name="LAST_COMMIT_MESSAGE" value="Added S&amp;P 500 stock list for filtering." />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/TradingApplication$TradeBot.coverage" NAME="TradeBot Coverage Results" MODIFIED="1702264345156" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/TradingApplication$app.coverage" NAME="app Coverage Results" MODIFIED="1708541123057" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/TradingApplication$app.coverage" NAME="app Coverage Results" MODIFIED="1708871482918" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

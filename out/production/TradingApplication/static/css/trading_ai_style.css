@@ -124,6 +124,10 @@ body{
 
 /* End of scan-market-container styles */
 
+.charts-text{
+    margin-bottom: 0.1rem;
+}
+
 /* Start of account-information-container styles */
 .account-info-btn{
     width: 50%;

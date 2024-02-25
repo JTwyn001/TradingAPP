@@ -1,8 +1,48 @@
-// JavaScript function to update button text
-function updateButtonText(text) {
+// JavaScript function to update button text and chart
+function updateChartAndButtonText(text, symbol) {
     var button = document.getElementById('dropdownMenuButton1');
     button.innerHTML = text + ' <i class="bi bi-caret-down-fill"></i>';
-};
+
+    // Update TradingView widget with the selected symbol
+    new TradingView.widget({
+        "container_id": "tradingview-widget",
+        "autosize": false,
+        "width": "100%",
+        "height": "96%",
+        "symbol": symbol, // Use the symbol parameter to dynamically set the symbol
+        "interval": "D",
+        "timezone": "Etc/UTC",
+        "theme": "light",
+        "style": "1",
+        "locale": "en",
+        "toolbar_bg": "#f1f3f6",
+        "enable_publishing": false,
+        "allow_symbol_change": true,
+        "details": true,
+        "hotlist": true,
+        "calendar": true,
+        "studies": [
+            "Volume@tv-basicstudies"
+        ],
+        "show_popup_button": true,
+        "popup_width": "1000",
+        "popup_height": "650"
+    });
+}
+
+$(document).ready(function() {
+    // Handle dropdown item click
+    $('.dropdown-item').click(function() {
+        var text = $(this).text(); // Get the text of the clicked item
+        var symbol = $(this).attr('data-symbol'); // Assuming you've added a data-symbol attribute to your dropdown items
+
+        updateChartAndButtonText(text, symbol);
+    });
+
+    // Initialize with a default symbol, if needed
+    updateChartAndButtonText("Choose Instrument", "NASDAQ:AAPL");
+});
+
 
 $(document).ready(function() {
 
@@ -30,9 +70,10 @@ $(document).ready(function() {
 
     // Attach click event listeners to dropdown items
     $('.dropdown-item').click(function() {
-        // 'this' refers to the clicked .dropdown-item element
-        var text = $(this).text();  // Using jQuery to get the text
-        updateButtonText(text);
+        var text = $(this).text(); // Get the text of the clicked item
+        var symbol = $(this).attr('data-symbol'); // Get the symbol from the data-symbol attribute
+
+        updateChartAndButtonText(text, symbol);
     });
 
 
