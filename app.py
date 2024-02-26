@@ -16,8 +16,6 @@ import webbrowser
 import matplotlib.pyplot as plt
 import yfinance as yf
 
-stocks = pd.read_csv('sp_500_stocks.csv')
-
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 # Initialize the Flask app and set the template folder
 app = Flask(__name__, static_folder='static', template_folder='templates')
@@ -50,17 +48,75 @@ def get_data(symbol):
         return jsonify({'error': str(e)})
 
 
+# Load the list of stocks from a CSV file
+stocks = pd.read_csv('sp_500_stocks.csv')
+
+
+def fetch_data_yfinance(tickers):
+    data = yf.download(tickers, period="1y")
+    return data['Adj Close']  # Adjusted Close Prices over the last year
+
+
+# Assuming 'tickers' is a list of ticker symbols you want to fetch data for
+tickers = ['AAPL', 'MSFT', 'GOOG']  # Example tickers
+data = fetch_data_yfinance(tickers)
+
+# Calculate the one-year price return for each stock
+one_year_returns = data.pct_change().tail(1)
+
+
+# Function to split the stock list into chunks of 100
+def chunks(lst, n):
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
+
+
+# Split stocks into groups of 100 and create a list of comma-separated strings
+symbol_groups = list(chunks(stocks['Ticker'], 100))
+symbol_strings = [','.join(group) for group in symbol_groups]
+
+# Define columns for the DataFrame
+columns = ['Ticker', 'Price', 'One-Year Price Return']
+
+# Create an empty DataFrame
+momentum_dataframe = pd.DataFrame(columns=columns)
+
+# Sort the DataFrame by 'One-Year Price Return' and select the top 10
+momentum_dataframe.sort_values('One-Year Price Return', ascending=False, inplace=True)
+top_10_momentum_stocks = momentum_dataframe.head(10)
+
+
+# Function to get top 10 momentum stocks
 def get_top_10_momentum_stocks():
-    # Your strategy code here, modified to return only the top 10 stocks
-    # For example:
-    top_10_stocks = final_dataframe['Ticker'].head(10).tolist()
-    return top_10_stocks
+    sp500_stocks = pd.read_csv('sp_500_stocks.csv')
+    tickers = sp500_stocks['Ticker'].tolist()
+    historical_data = yf.download(tickers, period="1y")['Adj Close']
+    returns = historical_data.pct_change().mean() * 252  # Assuming 252 trading days in a year
+    top_10_momentum = returns.nlargest(10)
+    return top_10_momentum.index.tolist()
 
 
+# Flask route to scan market and get top 10 momentum stocks
 @app.route('/scan-market')
 def scan_market():
-    top_10_stocks = get_top_10_momentum_stocks()
-    return jsonify(top_10_stocks)
+    try:
+        top_10_stocks = get_top_10_momentum_stocks()
+        return jsonify(top_10_stocks)
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
+
+# Function to get historical stock data using Yahoo Finance
+def get_historical_data(tickers):
+    data = yf.download(tickers, period="1y")['Adj Close']
+    return data
+
+
+# Function to calculate momentum scores
+def calculate_momentum_scores(data):
+    returns = data.pct_change().dropna()
+    momentum_scores = returns.mean() * 252 / returns.std()  # Example: Annualized Sharpe-like momentum score
+    return momentum_scores
 
 
 def calculate_get_stock_price(ticker):

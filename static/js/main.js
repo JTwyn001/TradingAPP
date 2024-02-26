@@ -30,6 +30,19 @@ function updateChartAndButtonText(text, symbol) {
     });
 }
 
+function updateDropdown(stocks) {
+    const dropdown = document.getElementById('dropdownMenuButton1');
+    dropdown.innerHTML = ''; // Clear existing options
+    stocks.forEach(stock => {
+        const option = document.createElement('a');
+        option.classList.add('dropdown-item');
+        option.href = '#';
+        option.text = stock;
+        option.setAttribute('data-symbol', stock); // Set the symbol as a data attribute
+        dropdown.appendChild(option);
+    });
+}
+
 $(document).ready(function() {
     // Handle dropdown item click
     $('.dropdown-item').click(function() {
@@ -58,12 +71,12 @@ $(document).ready(function() {
     });
 
     document.addEventListener('DOMContentLoaded', function() {
-        // Query all dropdown items
-        var items = document.querySelectorAll('.dropdown-item');
-        items.forEach(function(item) {
+        // Attach event listeners to newly added dropdown items
+        document.querySelectorAll('.dropdown-item').forEach(item => {
             item.addEventListener('click', function() {
-                var text = this.innerText; // 'this' refers to the item clicked
-                updateButtonText(text);
+                const symbol = this.getAttribute('data-symbol');
+                const text = this.text;
+                updateChartAndButtonText(text, symbol);
             });
         });
     });
@@ -111,5 +124,54 @@ $(document).ready(function() {
             document.getElementById('outputSection').innerHTML = 'Error fetching data: ' + error.message;
         });
     });
+
+    document.getElementById('ScanMarketBtn').addEventListener('click', function() {
+        const loadingBar = document.getElementById('loadingBar');
+        const progressBar = loadingBar.querySelector('.progress-bar');
+        const progressPercentage = loadingBar.querySelector('#progressPercentage');
+        let width = 0; // Initial width of the progress bar
+
+        // Show the loading bar
+        document.getElementById('loadingBar').style.display = '';
+
+        // Simulate loading progress
+        const interval = setInterval(function() {
+            if (width >= 100) {
+                clearInterval(interval);
+            } else {
+                width++;
+                progressBar.style.width = width + '%';
+                progressPercentage.textContent = width + '%';
+            }
+        }, 250); // Update the progress every 250 milliseconds
+
+        fetch('/scan-market')
+            .then(response => response.json())
+            .then(data => {
+                const dropdownMenu = document.getElementById('dropdownMenuButton1').nextElementSibling;
+                // Clear existing dropdown items
+                dropdownMenu.innerHTML = '';
+                // Add new dropdown items
+                data.forEach(stock => {
+                    const dropdownItem = document.createElement('a');
+                    dropdownItem.classList.add('dropdown-item');
+                    dropdownItem.href = "#";
+                    dropdownItem.setAttribute('data-symbol', stock);
+                    dropdownItem.textContent = stock;
+                    dropdownItem.addEventListener('click', function() {
+                        updateChartAndButtonText(this.textContent, this.getAttribute('data-symbol'));
+                    });
+                    dropdownMenu.appendChild(dropdownItem);
+                });
+
+                // Hide the loading bar after data is loaded
+                document.getElementById('loadingBar').style.display = 'none';
+            }).catch(error => {
+            console.error('Error fetching market data:', error);
+            // Hide the loading bar in case of error
+            document.getElementById('loadingBar').style.display = 'none';
+        });
+    });
+
 
 });
