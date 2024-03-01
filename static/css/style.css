@@ -240,7 +240,6 @@ body{
 .login-button {
     background-color: rgba(0, 0, 0, 0.125); /* Blue background */
     color: white;              /* White text */
-    /*padding: 10px 20px;        !* Top/bottom padding of 10px, left/right padding of 20px *!*/
     border: none;              /* No border */
     border-radius: 5px;        /* Rounded corners */
     font-size: 18px;           /* Font size */

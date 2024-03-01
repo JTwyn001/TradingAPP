@@ -7,6 +7,7 @@ import platform
 from openai import OpenAI
 import numpy as np  # The Numpy numerical computing library
 import pandas as pd  # The Pandas data science library
+import pandas_ta as ta
 import requests  # The requests library for HTTP requests in Python
 import xlsxwriter  # The XlsxWriter library for
 import math  # The Python math module

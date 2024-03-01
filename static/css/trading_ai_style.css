@@ -79,8 +79,7 @@ body{
     display: grid;
     grid-template-columns: 1fr 1fr; /* Two equal columns */
     justify-content: space-between;
-    align-items: start;
-    height: 100vh; /* Adjust as needed */
+    height: 100vh;
 }
 /* Start of trading-ai-container style */
 
@@ -98,7 +97,19 @@ body{
 }
 /* End of chart styles */
 
-/* Start of scan-market-container styles */
+/* Start of top left sector styles */
+.top-left-sector {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* This will push the button to the bottom */
+    height: 100%; /* Half of the viewport height, adjust as needed */
+    margin: 0;
+}
+
+.spacer {
+    flex-grow: 1; /* Will take up all available space */
+}
+
 .scan-market-container {
     grid-column-start: 1; /* Starts at the first column */
     display: flex;
@@ -107,7 +118,9 @@ body{
     padding: 10px;
     /* Additional styling as needed */
 }
-
+.form-check-label{
+    color: white;
+}
 /* Style for the Scan Market button */
 
 .scan-market-button {
@@ -121,6 +134,63 @@ body{
     transition: background-color 0.3s; /* Smooth transition for hover effect */
     width: 100%; /* Full width of its container */
 }
+
+.trade-stock-btn {
+    background-color: #28a745; /* Green background */
+    align-items: flex-end;
+    color: white; /* White text */
+    width: 50%;
+    height: 35px;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    position: relative;
+    border-radius: 10px;
+    padding: 0px;
+    float: right;
+}
+
+.trade-stock-btn:before {
+    content: '';
+    background: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    background-size: 400%;
+    z-index: -1;
+    filter: blur(5px);
+    width: calc(100% + 4px);
+    height: calc(100% + 4px);
+    animation: glowing 20s linear infinite;
+    opacity: 0;
+    transition: opacity .3s ease-in-out;
+    border-radius: 10px;
+}
+
+.trade-stock-btn:active {
+    color: #181818a8
+}
+
+.trade-stock-btn:active:after {
+    background: transparent;
+}
+
+.trade-stock-btn:hover:before {
+    opacity: 1;
+}
+
+.trade-stock-btn:after {
+    z-index: -1;
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: #0d61fd;
+    left: 0;
+    top: 0;
+    border-radius: 10px;
+}
+
 
 /* End of scan-market-container styles */
 
@@ -140,12 +210,14 @@ body{
     border-radius: 8px;
     color: white;
     padding: 3px 0px 3px 20px;
+    height: max-content;
 }
 .details{
     font-family: cursive;
 }
 .btn-container{
-    margin-left: 45%;
+
+    margin-top: auto;
 }
 /* End of account-information-container styles */
 
@@ -155,6 +227,7 @@ body{
     padding: 20px;
     background-color: #181818a8;
     border-radius: 8px;
+    height: max-content;
 }
 
 .output-section {
