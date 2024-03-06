@@ -37,6 +37,8 @@
                 </div>
             </div>
 
+            <div id="scan-marketMessage" style="display: none; color: green; font-weight: bold;">Successfully filtered highest momentum stocks in S&P 500 to dropdown</div>
+
             <div class="checkbox-container d-flex">
             <!-- Checkbox for LSTM -->
                 <div class="form-check my-2">
@@ -54,16 +56,13 @@
                 </div>
             </div>
 
-            <div class="text-center">
+            <div class="text-center my-2">
                 <button id="GetPredictionsBtn" class="btn button btn-success get-prediction-btn">Get Predictions</button>
             </div>
 
-            <div class="my-2">
-                <label for="stoplossSlider" class="form-label" style="color: white;">Trailing Stop-Loss : <span id="stoplossSliderValue">0%</span></label>
-                <input type="range" class="form-range" id="stoplossSlider" min="0" max="20" value="0" oninput="stoplossSliderValue.textContent = this.value + '%'" style="color: white;">
-            </div>
+            <div id="predictionMessage" style="display: none; color: green; font-weight: bold;">Successfully used lstm to predict recommendation</div>
 
-            <div class="dropdown w-100">
+            <div class="dropdown w-100 my-2">
                 <!-- Modified button with an ID -->
                 <button class="btn btn-secondary glow-on-hover scan-market-button w-100" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
                     Choose Instrument
@@ -80,6 +79,10 @@
                 </ul>
             </div>
 
+            <div class="my-2">
+                <label for="stoplossSlider" class="form-label" style="color: white;">Trailing Stop-Loss : <span id="stoplossSliderValue">0%</span></label>
+                <input type="range" class="form-range" id="stoplossSlider" min="0" max="20" value="0" oninput="stoplossSliderValue.textContent = this.value + '%'" style="color: white;">
+            </div>
 
             <!-- New div container for TRADE STOCK button with custom class for styling -->
             <div class="btn-container">

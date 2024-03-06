@@ -30,19 +30,6 @@ function updateChartAndButtonText(text, symbol) {
     });
 }
 
-function updateDropdown(stocks) {
-    const dropdown = document.getElementById('dropdownMenuButton1');
-    dropdown.innerHTML = ''; // Clear existing options
-    stocks.forEach(stock => {
-        const option = document.createElement('a');
-        option.classList.add('dropdown-item');
-        option.href = '#';
-        option.text = stock;
-        option.setAttribute('data-symbol', stock); // Set the symbol as a data attribute
-        dropdown.appendChild(option);
-    });
-}
-
 function getPredictions(ticker) {
     $.ajax({
         url: '/get_predictions',
@@ -61,48 +48,6 @@ function getPredictions(ticker) {
         }
     });
 }
-
-// function displayPredictions(predictions) {
-//     // Assume predictions is an array of objects with 'symbol', 'percentChange', and 'volume'
-//     // First, sort the predictions based on percentChange
-//     predictions.sort((a, b) => b.percentChange - a.percentChange);
-//
-//     // Get the dropdown element
-//     const dropdownMenu = document.getElementById('dropdownMenuButton1').nextElementSibling;
-//
-//     // Clear existing dropdown items
-//     dropdownMenu.innerHTML = '';
-//
-//     // Iterate over sorted predictions to create new dropdown items
-//     predictions.forEach((prediction, index) => {
-//         const listItem = document.createElement('li');
-//         const link = document.createElement('a');
-//         link.classList.add('dropdown-item');
-//         link.href = '#';
-//         link.dataset.symbol = prediction.symbol;
-//
-//         // Determine recommendation based on rank and percentChange
-//         let recommendation = '';
-//         if (index === 0) {
-//             recommendation = prediction.percentChange >= 0 ? 'Strong Buy' : 'Strong Sell';
-//         } else {
-//             recommendation = prediction.percentChange >= 0 ? 'Buy' : 'Sell';
-//         }
-//
-//         // Set the display text with symbol, rank, and recommendation
-//         link.innerText = `${index + 1}. ${prediction.symbol} - ${recommendation}`;
-//
-//         // Append the new dropdown item to the dropdown menu
-//         listItem.appendChild(link);
-//         dropdownMenu.appendChild(listItem);
-//
-//         // Optionally, add an event listener to the link for further interaction
-//         link.addEventListener('click', function() {
-//             // Implement what should happen when a dropdown item is clicked
-//             console.log(`Selected ${prediction.symbol} with recommendation: ${recommendation}`);
-//         });
-//     });
-// }
 
 
 $(document).ready(function() {
@@ -152,6 +97,7 @@ $('#GetPredictionsBtn').click(function() {
                 // Find the corresponding dropdown item and update its text
                 // $('a[data-symbol="' + ticker + '"]').text(ticker + ' -   ' + '     ' + prediction);
             }
+            document.getElementById('predictionMessage').style.display = 'block';
         },
         error: function(error) {
             console.log('Error getting predictions:', error);
@@ -268,6 +214,8 @@ $(document).ready(function() {
 
                 // Hide the loading bar after data is loaded
                 document.getElementById('loadingBar').style.display = 'none';
+                // Make the success message visible
+                document.getElementById('scan-marketMessage').style.display = 'block';
             }).catch(error => {
             console.error('Error fetching market data:', error);
             // Hide the loading bar in case of error
