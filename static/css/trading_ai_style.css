@@ -129,6 +129,7 @@ body{
 }
 .form-check-label{
     color: white;
+    margin-right: 10px;
 }
 /* Style for the Scan Market button */
 
@@ -159,6 +160,10 @@ body{
 
 .sell-prediction {
     color: #ff0000;
+}
+
+.checkbox-container {
+    display: flex;
 }
 
 .trade-stock-btn {
