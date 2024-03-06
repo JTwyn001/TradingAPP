@@ -4,6 +4,15 @@ body{
     overflow-x: hidden;
 }
 
+/* styles.css */
+.scrollable-content {
+    max-height: 500px; /* Adjust the height as needed */
+    overflow-y: auto; /* Enables vertical scrolling */
+    border: 1px solid #ccc; /* Just for visibility */
+    padding: 10px;
+}
+
+
 .glow-on-hover {
     width: 35px;
     height: 35px;
@@ -79,7 +88,6 @@ body{
     display: grid;
     grid-template-columns: 1fr 1fr; /* Two equal columns */
     justify-content: space-between;
-    align-items: start;
     height: 100vh;
 }
 /* Start of trading-ai-container style */
@@ -136,16 +144,19 @@ body{
     width: 100%; /* Full width of its container */
 }
 
-.trade-stock-container {
-    margin-top: auto; /* Pushes the button to the bottom */
+.get-prediction-btn {
+    background-color: #b22833; /* Green background */
+    width: 50%;
+    height: 30px;
+    position: relative;
+    border-radius: 10px;
+    padding: 0px;
 }
 
 .trade-stock-btn {
     background-color: #28a745; /* Green background */
-    align-items: flex-end;
     color: white; /* White text */
     width: 50%;
-    margin-top: auto; /* Pushes the button to the bottom */
     height: 35px;
     border: none;
     outline: none;
@@ -156,7 +167,15 @@ body{
     float: right;
 }
 
-.trade-stock-btn:before {
+.button {
+    width: 50%;
+    height: 30px;
+    position: relative;
+    border-radius: 10px;
+    padding: 0px;
+}
+
+.button:before {
     content: '';
     background: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
     position: absolute;
@@ -173,19 +192,19 @@ body{
     border-radius: 10px;
 }
 
-.trade-stock-btn:active {
+.button:active {
     color: #181818a8
 }
 
-.trade-stock-btn:active:after {
+.button:active:after {
     background: transparent;
 }
 
-.trade-stock-btn:hover:before {
+.button:hover:before {
     opacity: 1;
 }
 
-.trade-stock-btn:after {
+.button:after {
     z-index: -1;
     content: '';
     position: absolute;
@@ -216,12 +235,14 @@ body{
     border-radius: 8px;
     color: white;
     padding: 3px 0px 3px 20px;
+    height: max-content;
 }
 .details{
     font-family: cursive;
 }
 .btn-container{
-    margin-left: 45%;
+
+    margin-top: auto;
 }
 /* End of account-information-container styles */
 
@@ -231,6 +252,7 @@ body{
     padding: 20px;
     background-color: #181818a8;
     border-radius: 8px;
+    height: max-content;
 }
 
 .output-section {

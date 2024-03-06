@@ -1,3 +1,4 @@
+import datetime
 import json
 
 from flask import Flask, request, jsonify, session, render_template
@@ -17,12 +18,26 @@ import webbrowser
 import matplotlib.pyplot as plt
 import yfinance as yf
 
+import tensorflow as tf
+import keras
+from keras import optimizers
+from keras.callbacks import History
+from keras.models import Model
+from keras.layers import Dense, Dropout, LSTM, Input, Activation, concatenate
+from tensorflow.keras.models import load_model
+import joblib
+
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 # Initialize the Flask app and set the template folder
 app = Flask(__name__, static_folder='static', template_folder='templates')
 # CORS(app)
 # Set a secret key for session handling
 app.secret_key = 'algotradingproject'  # Generates a random key
+
+# trained model saved as 'lstm_model.h5'
+lstm_model = load_model('./models/lstm_model.h5')
+
+scaler = joblib.load('./scalers/lstm_scaler_20240303_054818.pkl')
 
 
 @app.route('/')
@@ -118,6 +133,114 @@ def calculate_momentum_scores(data):
     returns = data.pct_change().dropna()
     momentum_scores = returns.mean() * 252 / returns.std()  # Example: Annualized Sharpe-like momentum score
     return momentum_scores
+
+
+def get_last_price(ticker):
+    # Fetch the most recent closing price for the ticker
+    data = yf.download(tickers=ticker, period='1d')
+    last_price = data['Close'].iloc[-1]
+    return last_price
+
+
+# Function to load the latest model and scaler
+def load_latest_model_and_scaler(model_dir='./models', scaler_dir='./scalers'):
+    model_files = [os.path.join(model_dir, f) for f in os.listdir(model_dir) if f.endswith('.h5')]
+    scaler_files = [os.path.join(scaler_dir, f) for f in os.listdir(scaler_dir) if f.endswith('.pkl')]
+
+    # Find the latest model file
+    latest_model_file = max([os.path.join(model_dir, f) for f in os.listdir(model_dir)], key=os.path.getctime)
+    # Find the latest scaler file
+    latest_scaler_file = max([os.path.join(scaler_dir, f) for f in os.listdir(scaler_dir)], key=os.path.getctime)
+
+    model = load_model(latest_model_file)
+    scaler = joblib.load(latest_scaler_file)
+
+    return model, scaler
+
+
+# Function to fetch recent data
+def fetch_recent_data(ticker, window_size=30):
+    try:
+        end_date = datetime.datetime.now().strftime('%Y-%m-%d')
+        # Increase the buffer to account for weekends and holidays
+        start_date = (datetime.datetime.now() - datetime.timedelta(days=window_size * 3)).strftime('%Y-%m-%d')
+
+        data = yf.download(ticker, start=start_date, end=end_date)
+
+        # Ensure data was fetched successfully
+        if data.empty:
+            raise ValueError(f"No data fetched for {ticker}")
+
+        # Add indicators as per model's training
+        data['RSI'] = ta.rsi(data['Close'], length=15)
+        data['EMAF'] = ta.ema(data['Close'], length=20)
+        data['EMAM'] = ta.ema(data['Close'], length=100)
+        data['EMAS'] = ta.ema(data['Close'], length=150)
+
+        data.dropna(inplace=True)
+
+        return data
+
+    except Exception as e:
+        print(f"Error fetching data for {ticker}: {e}")
+        return None  # Return None or handle this case as appropriate in your application
+
+
+def preprocess_data_for_lstm(ticker):
+    # Fetch historical data
+    data = yf.download(tickers=ticker, start='2012-03-11', end='2024-02-10')
+
+    # Adding indicators
+    data['RSI'] = ta.rsi(data['Close'], length=15)
+    data['EMAF'] = ta.ema(data['Close'], length=20)
+    data['EMAM'] = ta.ema(data['Close'], length=100)
+    data['EMAS'] = ta.ema(data['Close'], length=150)
+
+    # Ensure all data is complete
+    data.dropna(inplace=True)
+
+    # Select relevant features for predictions
+    features = data[['Adj Close', 'RSI', 'EMAF', 'EMAM', 'EMAS']].values
+
+    # Load the scaler
+    scaler = joblib.load('./scalers/lstm_scaler_20240303_054818.pkl')
+
+    # Scale the features
+    features_scaled = scaler.transform(features)
+
+    if features_scaled.shape[0] < 30:
+        raise ValueError("Not enough data to create a sequence for LSTM.")
+
+    features_reshaped = features_scaled[-30:].reshape(1, 30, features_scaled.shape[1])
+
+    return features_reshaped
+
+
+# Function for LSTM prediction
+@app.route('/get_predictions', methods=['POST'])
+def get_predictions():
+    # Extract the selected stocks from the request
+    selected_stocks = request.json['selectedStocks']
+
+    # Load the latest model and scaler dynamically
+    model, scaler = load_latest_model_and_scaler()
+
+    predictions = {}
+    for ticker in selected_stocks:
+        try:
+            recent_data = fetch_recent_data(ticker, window_size=30)
+            prepared_data = preprocess_data_for_lstm(ticker)
+            if prepared_data is None or recent_data.empty:
+                predictions[ticker] = 'No data available'
+                continue
+
+            predicted_change = lstm_model.predict(prepared_data)[0][0]
+            recommendation = 'Buy' if predicted_change > 0 else 'Sell'
+            predictions[ticker] = recommendation
+        except Exception as e:
+            predictions[ticker] = f'Error: {str(e)}'
+
+    return jsonify(predictions)
 
 
 def calculate_get_stock_price(ticker):

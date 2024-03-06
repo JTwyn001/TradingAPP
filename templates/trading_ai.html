@@ -49,6 +49,11 @@
                 <button id="GetPredictionsBtn" class="btn button btn-success get-prediction-btn">Get Predictions</button>
             </div>
 
+            <div class="my-2">
+                <label for="stoplossSlider" class="form-label" style="color: white;">Trailing Stop-Loss : <span id="stoplossSliderValue">0%</span></label>
+                <input type="range" class="form-range" id="stoplossSlider" min="0" max="20" value="0" oninput="stoplossSliderValue.textContent = this.value + '%'" style="color: white;">
+            </div>
+
             <div class="dropdown w-100">
                 <!-- Modified button with an ID -->
                 <button class="btn btn-secondary glow-on-hover scan-market-button w-100" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
@@ -56,7 +61,6 @@
                     <i class="bi bi-caret-down-fill"></i>
                 </button>
                 <!-- Placeholder for displaying the rankings -->
-                <div id="predictionsContainer"></div>
                 <ul class="dropdown-menu w-100" aria-labelledby="dropdownMenuButton1">
                     <!-- Dropdown title -->
                     <li><span class="dropdown-item disabled">Top 10 Scanned Instruments</span></li>
@@ -67,10 +71,6 @@
                 </ul>
             </div>
 
-            <div class="my-2">
-                <label for="stoplossSlider" class="form-label" style="color: white;">Trailing Stop-Loss : <span id="stoplossSliderValue">0%</span></label>
-                <input type="range" class="form-range" id="stoplossSlider" min="0" max="20" value="0" oninput="stoplossSliderValue.textContent = this.value + '%'" style="color: white;">
-            </div>
 
             <!-- New div container for TRADE STOCK button with custom class for styling -->
             <div class="btn-container">

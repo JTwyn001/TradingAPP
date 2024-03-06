@@ -43,12 +43,74 @@ function updateDropdown(stocks) {
     });
 }
 
+function getPredictions(ticker) {
+    $.ajax({
+        url: '/get_predictions',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ 'ticker': ticker }),
+        success: function(predictions) {
+            // Assuming predictions is an array of prediction values
+            $('#predictionSection').empty(); // Clear previous predictions
+            predictions.forEach(function(prediction) {
+                $('#predictionSection').append(`<p>Prediction: ${prediction}</p>`);
+            });
+        },
+        error: function(error) {
+            console.log(error);
+        }
+    });
+}
+
+function displayPredictions(predictions) {
+    // Assume predictions is an array of objects with 'symbol', 'percentChange', and 'volume'
+    // First, sort the predictions based on percentChange
+    predictions.sort((a, b) => b.percentChange - a.percentChange);
+
+    // Get the dropdown element
+    const dropdownMenu = document.getElementById('dropdownMenuButton1').nextElementSibling;
+
+    // Clear existing dropdown items
+    dropdownMenu.innerHTML = '';
+
+    // Iterate over sorted predictions to create new dropdown items
+    predictions.forEach((prediction, index) => {
+        const listItem = document.createElement('li');
+        const link = document.createElement('a');
+        link.classList.add('dropdown-item');
+        link.href = '#';
+        link.dataset.symbol = prediction.symbol;
+
+        // Determine recommendation based on rank and percentChange
+        let recommendation = '';
+        if (index === 0) {
+            recommendation = prediction.percentChange >= 0 ? 'Strong Buy' : 'Strong Sell';
+        } else {
+            recommendation = prediction.percentChange >= 0 ? 'Buy' : 'Sell';
+        }
+
+        // Set the display text with symbol, rank, and recommendation
+        link.innerText = `${index + 1}. ${prediction.symbol} - ${recommendation}`;
+
+        // Append the new dropdown item to the dropdown menu
+        listItem.appendChild(link);
+        dropdownMenu.appendChild(listItem);
+
+        // Optionally, add an event listener to the link for further interaction
+        link.addEventListener('click', function() {
+            // Implement what should happen when a dropdown item is clicked
+            console.log(`Selected ${prediction.symbol} with recommendation: ${recommendation}`);
+        });
+    });
+}
+
+
+
 $(document).ready(function() {
     // Handle dropdown item click
-    $('.dropdown-item').click(function() {
-        var text = $(this).text(); // Get the text of the clicked item
-        var symbol = $(this).attr('data-symbol'); // Assuming you've added a data-symbol attribute to your dropdown items
-
+    $(document).on('click', '.dropdown-item', function() {
+        var symbol = $(this).data('symbol');
+        var text = $(this).text();
         updateChartAndButtonText(text, symbol);
     });
 
@@ -56,6 +118,39 @@ $(document).ready(function() {
     updateChartAndButtonText("Choose Instrument", "NASDAQ:AAPL");
 });
 
+$('#GetPredictionsBtn').click(function() {
+    if ($('#lstmCheckbox').is(':checked')) {
+        let selectedStocks = $('.dropdown-menu .dropdown-item').map(function() {
+            return $(this).data('symbol');
+        }).get();
+
+        // Send the selected stocks to the backend for predictions
+        $.ajax({
+            url: '/get_predictions',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ selectedStocks: selectedStocks }),
+            success: function(predictions) {
+                // Clear existing recommendations
+                $('.dropdown-menu .dropdown-item').each(function() {
+                    $(this).text($(this).data('symbol'));
+                });
+
+                // Update dropdown items with predictions
+                $.each(predictions, function(ticker, prediction) {
+                    $('.dropdown-menu .dropdown-item').each(function() {
+                        if ($(this).data('symbol') === ticker) {
+                            $(this).text(ticker + ' - ' + prediction);
+                        }
+                    });
+                });
+            },
+            error: function(error) {
+                console.log('Error getting predictions:', error);
+            }
+        });
+    }
+});
 
 $(document).ready(function() {
 
@@ -82,7 +177,7 @@ $(document).ready(function() {
     });
 
     // Attach click event listeners to dropdown items
-    $('.dropdown-item').click(function() {
+    $(document).on('click', '.dropdown-item', function() {
         var text = $(this).text(); // Get the text of the clicked item
         var symbol = $(this).attr('data-symbol'); // Get the symbol from the data-symbol attribute
 

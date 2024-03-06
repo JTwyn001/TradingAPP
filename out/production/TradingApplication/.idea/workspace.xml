@@ -1,0 +1,421 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="d0b96371-010e-4b42-bb1d-524ead40fc9e" name="Changes" comment="Trade Stock button, LSTM checkbox and trailing stoploss slider added.">
+      <change afterPath="$PROJECT_DIR$/models/lstm_model.h5" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/TradingApplication/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/TradingApplication/app.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/TradingApplication/static/css/trading_ai_style.css" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/TradingApplication/static/css/trading_ai_style.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/TradingApplication/static/js/main.js" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/TradingApplication/static/js/main.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/TradingApplication/templates/trading_ai.html" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/TradingApplication/templates/trading_ai.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/js/main.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/js/main.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/trading_ai.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/trading_ai.html" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Jupyter Notebook" />
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$APPLICATION_CONFIG_DIR$/javascript/extLibs/http_cdn.jsdelivr.net_npm_bootstrap@5.3.2_dist_css_bootstrap.css" root0="SKIP_INSPECTION" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
+  </component>
+  <component name="ProjectId" id="2YK4141Dk2Tqb6rO9kDnCwaxOgC" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="autoscrollToSource" value="true" />
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "last_opened_file_path": "/Users/tohyeeb/Documents/Final year/Capstone/TradingApplication/models",
+    "nodejs_package_manager_path": "npm",
+    "project.structure.last.edited": "SDKs",
+    "project.structure.proportion": "0.15",
+    "project.structure.side.proportion": "0.2",
+    "settings.editor.selected.configurable": "preferences.externalTools"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/models" />
+      <recent name="$PROJECT_DIR$" />
+      <recent name="$PROJECT_DIR$/web/assets/logo" />
+      <recent name="$PROJECT_DIR$/web/assets/vendore/texllate" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
+      <recent name="$PROJECT_DIR$/web/static" />
+      <recent name="$PROJECT_DIR$/web/templates" />
+      <recent name="$PROJECT_DIR$/web/static/js" />
+      <recent name="$PROJECT_DIR$/web/static/css" />
+    </key>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="d0b96371-010e-4b42-bb1d-524ead40fc9e" name="Changes" comment="" />
+      <created>1700260724965</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1700260724965</updated>
+      <workItem from="1700260726667" duration="21759000" />
+      <workItem from="1700373614919" duration="30000" />
+      <workItem from="1700373649437" duration="450000" />
+      <workItem from="1700445965715" duration="198000" />
+      <workItem from="1700691802432" duration="30000" />
+      <workItem from="1700748492435" duration="540000" />
+      <workItem from="1700777171944" duration="1850000" />
+      <workItem from="1700834520086" duration="548000" />
+      <workItem from="1701431190946" duration="609000" />
+      <workItem from="1701987584096" duration="17275000" />
+      <workItem from="1702151226637" duration="44595000" />
+      <workItem from="1702591529249" duration="3491000" />
+      <workItem from="1702655512878" duration="104000" />
+      <workItem from="1702655962550" duration="812000" />
+      <workItem from="1702856319958" duration="12000" />
+      <workItem from="1702856566000" duration="4141000" />
+      <workItem from="1703528947692" duration="612000" />
+      <workItem from="1703606103061" duration="4970000" />
+      <workItem from="1704229646752" duration="378000" />
+      <workItem from="1708135866430" duration="8472000" />
+      <workItem from="1708541094923" duration="497000" />
+      <workItem from="1708542123495" duration="7095000" />
+      <workItem from="1708831297454" duration="81615000" />
+    </task>
+    <task id="LOCAL-00001" summary="Dissertation GUI commit">
+      <created>1700265480605</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1700265480605</updated>
+    </task>
+    <task id="LOCAL-00002" summary="Main Page and AI page first Commit">
+      <created>1700315300511</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1700315300511</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Main Page and AI page first Commit">
+      <created>1701991771568</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1701991771568</updated>
+    </task>
+    <task id="LOCAL-00004" summary="Main Page and AI page first Commit">
+      <created>1701993101883</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1701993101883</updated>
+    </task>
+    <task id="LOCAL-00005" summary="Trading AI page commit.">
+      <created>1702075491408</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1702075491408</updated>
+    </task>
+    <task id="LOCAL-00006" summary="Trading AI page commit.">
+      <created>1702077556135</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1702077556135</updated>
+    </task>
+    <task id="LOCAL-00007" summary="Trading AI page commit.">
+      <created>1702078189950</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1702078189950</updated>
+    </task>
+    <task id="LOCAL-00008" summary="Trading AI page commit.">
+      <created>1702079002456</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1702079002456</updated>
+    </task>
+    <task id="LOCAL-00009" summary="Trading AI page commit.">
+      <created>1702091357041</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1702091357041</updated>
+    </task>
+    <task id="LOCAL-00010" summary="Trading AI page commit.">
+      <created>1702092287047</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1702092287047</updated>
+    </task>
+    <task id="LOCAL-00011" summary="Trading AI page commit.">
+      <created>1702339224754</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1702339224754</updated>
+    </task>
+    <task id="LOCAL-00012" summary="Trading AI page commit.">
+      <created>1702495334351</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1702495334351</updated>
+    </task>
+    <task id="LOCAL-00013" summary="Trading AI page commit.">
+      <created>1702497147934</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1702497147934</updated>
+    </task>
+    <task id="LOCAL-00014" summary="Trading AI page commit.">
+      <created>1702502706582</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1702502706583</updated>
+    </task>
+    <task id="LOCAL-00015" summary="Trading AI page commit.">
+      <created>1702513792827</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1702513792828</updated>
+    </task>
+    <task id="LOCAL-00016" summary="Trading AI page commit.">
+      <created>1702517188731</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1702517188731</updated>
+    </task>
+    <task id="LOCAL-00017" summary="integrating front and backend.">
+      <created>1702857010035</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1702857010035</updated>
+    </task>
+    <task id="LOCAL-00018" summary="integrating front and backend.">
+      <created>1702943249147</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1702943249147</updated>
+    </task>
+    <task id="LOCAL-00019" summary="integrating front and backend.">
+      <created>1702943351587</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1702943351587</updated>
+    </task>
+    <task id="LOCAL-00020" summary="integrating front and backend.">
+      <created>1703029355124</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1703029355124</updated>
+    </task>
+    <task id="LOCAL-00021" summary="integrating front and backend.">
+      <created>1703029492969</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
+      <option name="project" value="LOCAL" />
+      <updated>1703029492969</updated>
+    </task>
+    <task id="LOCAL-00022" summary="integrating front and backend.">
+      <created>1703029541295</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1703029541295</updated>
+    </task>
+    <task id="LOCAL-00023" summary="integrating front and backend.">
+      <created>1703676098059</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1703676098059</updated>
+    </task>
+    <task id="LOCAL-00024" summary="integrating front and backend.">
+      <created>1703676109952</created>
+      <option name="number" value="00024" />
+      <option name="presentableId" value="LOCAL-00024" />
+      <option name="project" value="LOCAL" />
+      <updated>1703676109952</updated>
+    </task>
+    <task id="LOCAL-00025" summary="integrating front and backend.">
+      <created>1703807790628</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1703807790628</updated>
+    </task>
+    <task id="LOCAL-00026" summary="integrating front and backend.">
+      <created>1703807871388</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1703807871388</updated>
+    </task>
+    <task id="LOCAL-00027" summary="integrating front and backend.">
+      <created>1703978234986</created>
+      <option name="number" value="00027" />
+      <option name="presentableId" value="LOCAL-00027" />
+      <option name="project" value="LOCAL" />
+      <updated>1703978234986</updated>
+    </task>
+    <task id="LOCAL-00028" summary="integrating front and backend.">
+      <created>1703980534059</created>
+      <option name="number" value="00028" />
+      <option name="presentableId" value="LOCAL-00028" />
+      <option name="project" value="LOCAL" />
+      <updated>1703980534059</updated>
+    </task>
+    <task id="LOCAL-00029" summary="integrating front and backend.">
+      <created>1704239940328</created>
+      <option name="number" value="00029" />
+      <option name="presentableId" value="LOCAL-00029" />
+      <option name="project" value="LOCAL" />
+      <updated>1704239940328</updated>
+    </task>
+    <task id="LOCAL-00030" summary="integrating front and backend.">
+      <created>1708138529285</created>
+      <option name="number" value="00030" />
+      <option name="presentableId" value="LOCAL-00030" />
+      <option name="project" value="LOCAL" />
+      <updated>1708138529285</updated>
+    </task>
+    <task id="LOCAL-00031" summary="integrating front and backend.">
+      <created>1708360543884</created>
+      <option name="number" value="00031" />
+      <option name="presentableId" value="LOCAL-00031" />
+      <option name="project" value="LOCAL" />
+      <updated>1708360543884</updated>
+    </task>
+    <task id="LOCAL-00032" summary="Button fix.">
+      <created>1708477960931</created>
+      <option name="number" value="00032" />
+      <option name="presentableId" value="LOCAL-00032" />
+      <option name="project" value="LOCAL" />
+      <updated>1708477960931</updated>
+    </task>
+    <task id="LOCAL-00033" summary="Refractor.">
+      <created>1708559044726</created>
+      <option name="number" value="00033" />
+      <option name="presentableId" value="LOCAL-00033" />
+      <option name="project" value="LOCAL" />
+      <updated>1708559044726</updated>
+    </task>
+    <task id="LOCAL-00034" summary="Added S&amp;P 500 stock list for filtering.">
+      <created>1708562483933</created>
+      <option name="number" value="00034" />
+      <option name="presentableId" value="LOCAL-00034" />
+      <option name="project" value="LOCAL" />
+      <updated>1708562483933</updated>
+    </task>
+    <task id="LOCAL-00035" summary="Added Charts section to view filtered stocks.">
+      <created>1708873540533</created>
+      <option name="number" value="00035" />
+      <option name="presentableId" value="LOCAL-00035" />
+      <option name="project" value="LOCAL" />
+      <updated>1708873540533</updated>
+    </task>
+    <task id="LOCAL-00036" summary="Implemented Scan Button function using a quantitative momentum strategy to rank stocks.">
+      <created>1708924882861</created>
+      <option name="number" value="00036" />
+      <option name="presentableId" value="LOCAL-00036" />
+      <option name="project" value="LOCAL" />
+      <updated>1708924882861</updated>
+    </task>
+    <task id="LOCAL-00037" summary="Implemented Scan Button function using a quantitative momentum strategy to rank stocks.">
+      <created>1708931594223</created>
+      <option name="number" value="00037" />
+      <option name="presentableId" value="LOCAL-00037" />
+      <option name="project" value="LOCAL" />
+      <updated>1708931594223</updated>
+    </task>
+    <task id="LOCAL-00038" summary="Trade Stock button, LSTM checkbox and trailing stoploss slider added.">
+      <created>1709298244556</created>
+      <option name="number" value="00038" />
+      <option name="presentableId" value="LOCAL-00038" />
+      <option name="project" value="LOCAL" />
+      <updated>1709298244556</updated>
+    </task>
+    <task id="LOCAL-00039" summary="Trade Stock button, LSTM checkbox and trailing stoploss slider added.">
+      <created>1709299180437</created>
+      <option name="number" value="00039" />
+      <option name="presentableId" value="LOCAL-00039" />
+      <option name="project" value="LOCAL" />
+      <updated>1709299180438</updated>
+    </task>
+    <task id="LOCAL-00040" summary="Trade Stock button, LSTM checkbox and trailing stoploss slider added.">
+      <created>1709305748765</created>
+      <option name="number" value="00040" />
+      <option name="presentableId" value="LOCAL-00040" />
+      <option name="project" value="LOCAL" />
+      <updated>1709305748765</updated>
+    </task>
+    <option name="localTasksCounter" value="41" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Dissertation GUI commit" />
+    <MESSAGE value="Main Page and AI page first Commit" />
+    <MESSAGE value="Trading AI page commit." />
+    <MESSAGE value="integrating front and backend." />
+    <MESSAGE value="Button fix." />
+    <MESSAGE value="Refractor." />
+    <MESSAGE value="Added S&amp;P 500 stock list for filtering." />
+    <MESSAGE value="Added Charts section to view filtered stocks." />
+    <MESSAGE value="Implemented Scan Button function using a quantitative momentum strategy to rank stocks." />
+    <MESSAGE value="Trade Stock button, LSTM checkbox and trailing stoploss slider added." />
+    <option name="LAST_COMMIT_MESSAGE" value="Trade Stock button, LSTM checkbox and trailing stoploss slider added." />
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/TradingApplication$TradeBot.coverage" NAME="TradeBot Coverage Results" MODIFIED="1702264345156" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/TradingApplication$app.coverage" NAME="app Coverage Results" MODIFIED="1709315275230" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+  </component>
+</project>

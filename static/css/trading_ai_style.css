@@ -4,6 +4,15 @@ body{
     overflow-x: hidden;
 }
 
+/* styles.css */
+.scrollable-content {
+    max-height: 500px; /* Adjust the height as needed */
+    overflow-y: auto; /* Enables vertical scrolling */
+    border: 1px solid #ccc; /* Just for visibility */
+    padding: 10px;
+}
+
+
 .glow-on-hover {
     width: 35px;
     height: 35px;
@@ -142,6 +151,14 @@ body{
     position: relative;
     border-radius: 10px;
     padding: 0px;
+}
+
+.buy-prediction {
+    color: blue;
+}
+
+.sell-prediction {
+    color: #ff0000;
 }
 
 .trade-stock-btn {

@@ -62,23 +62,54 @@ function getPredictions(ticker) {
     });
 }
 
-function displayPredictions(predictions) {
-    predictions.forEach(prediction => {
-        // Find the corresponding dropdown item or table row for the ticker
-        // Update it with the prediction and recommendation
-        // For example, if using a table:
-        $(`#row-for-${prediction.ticker}`).find('.prediction-column').text(prediction.prediction);
-        $(`#row-for-${prediction.ticker}`).find('.recommendation-column').text(prediction.recommendation);
-    });
-}
+// function displayPredictions(predictions) {
+//     // Assume predictions is an array of objects with 'symbol', 'percentChange', and 'volume'
+//     // First, sort the predictions based on percentChange
+//     predictions.sort((a, b) => b.percentChange - a.percentChange);
+//
+//     // Get the dropdown element
+//     const dropdownMenu = document.getElementById('dropdownMenuButton1').nextElementSibling;
+//
+//     // Clear existing dropdown items
+//     dropdownMenu.innerHTML = '';
+//
+//     // Iterate over sorted predictions to create new dropdown items
+//     predictions.forEach((prediction, index) => {
+//         const listItem = document.createElement('li');
+//         const link = document.createElement('a');
+//         link.classList.add('dropdown-item');
+//         link.href = '#';
+//         link.dataset.symbol = prediction.symbol;
+//
+//         // Determine recommendation based on rank and percentChange
+//         let recommendation = '';
+//         if (index === 0) {
+//             recommendation = prediction.percentChange >= 0 ? 'Strong Buy' : 'Strong Sell';
+//         } else {
+//             recommendation = prediction.percentChange >= 0 ? 'Buy' : 'Sell';
+//         }
+//
+//         // Set the display text with symbol, rank, and recommendation
+//         link.innerText = `${index + 1}. ${prediction.symbol} - ${recommendation}`;
+//
+//         // Append the new dropdown item to the dropdown menu
+//         listItem.appendChild(link);
+//         dropdownMenu.appendChild(listItem);
+//
+//         // Optionally, add an event listener to the link for further interaction
+//         link.addEventListener('click', function() {
+//             // Implement what should happen when a dropdown item is clicked
+//             console.log(`Selected ${prediction.symbol} with recommendation: ${recommendation}`);
+//         });
+//     });
+// }
 
 
 $(document).ready(function() {
     // Handle dropdown item click
-    $('.dropdown-item').click(function() {
-        var text = $(this).text(); // Get the text of the clicked item
-        var symbol = $(this).attr('data-symbol'); // Assuming you've added a data-symbol attribute to your dropdown items
-
+    $(document).on('click', '.dropdown-item', function() {
+        var symbol = $(this).data('symbol');
+        var text = $(this).text();
         updateChartAndButtonText(text, symbol);
     });
 
@@ -87,24 +118,39 @@ $(document).ready(function() {
 });
 
 $('#GetPredictionsBtn').click(function() {
-    let selectedStocks = [];  // Collect tickers from the dropdown
-    $('.dropdown-item').each(function() {
-        selectedStocks.push($(this).data('symbol'));
-    });
+    var selectedStocks = [];
+    if ($('#lstmCheckbox').is(':checked')) {
+        selectedStocks = $('.dropdown-menu .dropdown-item').map(function() {
+            return $(this).data('symbol');
+        }).get();
+    }
+
     // Send the selected stocks to the backend for predictions
     $.ajax({
         url: '/get_predictions',
         type: 'POST',
         contentType: 'application/json',
         data: JSON.stringify({ selectedStocks: selectedStocks }),
-        success: function(predictions) {
-            // Clear the predictions container
-            $('#predictionsContainer').empty();
-            // Display predictions and recommendations next to each stock
-            displayPredictions(response);
-            // Display the predictions
-            for (let [stock, prediction] of Object.entries(predictions)) {
-                $('#predictionsContainer').append(`<p>${stock}: ${prediction}</p>`);
+        success: function(response) {
+            console.log('Response from server:', response); // Add this line to log the response
+            // Clear existing recommendations
+            $('.dropdown-menu .dropdown-item').each(function() {
+                $(this).text($(this).data('symbol')).removeClass('buy-prediction sell-prediction');
+            });
+            // Then update dropdown items with predictions
+            for (var ticker in response) {
+                var prediction = response[ticker];
+                var $dropdownItem = $('a[data-symbol="' + ticker + '"]');
+                // Update the text
+                $dropdownItem.text(ticker + ' - ' + prediction);
+                // Add color based on the prediction
+                if (prediction === 'BUY') {
+                    $dropdownItem.addClass('buy-prediction');
+                } else if (prediction === 'SELL') {
+                    $dropdownItem.addClass('sell-prediction');
+                }
+                // Find the corresponding dropdown item and update its text
+                // $('a[data-symbol="' + ticker + '"]').text(ticker + ' -   ' + '     ' + prediction);
             }
         },
         error: function(error) {
@@ -138,7 +184,7 @@ $(document).ready(function() {
     });
 
     // Attach click event listeners to dropdown items
-    $('.dropdown-item').click(function() {
+    $(document).on('click', '.dropdown-item', function() {
         var text = $(this).text(); // Get the text of the clicked item
         var symbol = $(this).attr('data-symbol'); // Get the symbol from the data-symbol attribute
 
@@ -199,7 +245,7 @@ $(document).ready(function() {
                 progressBar.style.width = width + '%';
                 progressPercentage.textContent = width + '%';
             }
-        }, 250); // Update the progress every 250 milliseconds
+        }, 125); // Update the progress every 125 milliseconds so it matches the process on terminal
 
         fetch('/scan-market')
             .then(response => response.json())
