@@ -5,7 +5,9 @@ from flask import Flask, request, jsonify, session, render_template
 # from flask_cors import CORS
 import os
 import platform
-from openai import OpenAI
+import openai
+import MetaTrader5 as mt
+import time
 import numpy as np  # The Numpy numerical computing library
 import pandas as pd  # The Pandas data science library
 import pandas_ta as ta
@@ -27,12 +29,26 @@ from keras.layers import Dense, Dropout, LSTM, Input, Activation, concatenate
 from tensorflow.keras.models import load_model
 import joblib
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+mt.initialize()
+
+if not mt.initialize():
+    print("initialize() failed, error code =", mt.last_error())
+    quit()
+else:
+    print('Connected to MetaTrader5')
+
+login = 51684010
+password = 'd&CISL465!tBzO'
+server = 'ICMarketsSC-Demo'
+
+mt.login(login, password, server)
+
+openai.api_key = os.getenv("OPENAI_API_KEY")
 # Initialize the Flask app and set the template folder
 app = Flask(__name__, static_folder='static', template_folder='templates')
 # CORS(app)
 # Set a secret key for session handling
-app.secret_key = 'algotradingproject'  # Generates a random key
+app.secret_key = 'algotradingproject'
 
 
 # trained SPY model saved as 'lstm_model_20240304_172043.h5'
@@ -264,6 +280,46 @@ def get_predictions():
     return jsonify(stock_predictions)
 
 
+@app.route('/path-to-your-flask-route')
+def get_account_info():
+    if not mt.initialize():
+        return jsonify({'error': 'Failed to initialize MT5'}), 500
+
+    account_info = mt.account_info()._asdict()
+    positions = mt.positions_get()
+    positions_data = [{'symbol': pos.symbol, 'profit': pos.profit, 'currency': '£'} for pos in
+                      positions]  # Assuming USD for simplicity
+
+    mt.shutdown()
+
+    return jsonify({
+        'balance': account_info['balance'],
+        'equity': account_info['equity'],
+        'positions': positions_data
+    })
+
+
+def get_open_positions():
+    if not mt.initialize():
+        print("initialize() failed, error code =", mt.last_error())
+        return []
+
+    positions = mt.positions_get()
+    if positions is None:
+        print("No positions found, error code =", mt.last_error())
+        return []
+
+    positions_data = [{'symbol': pos.symbol, 'profit': pos.profit} for pos in positions]
+    return positions_data
+
+
+@app.route('/update_positions', methods=['GET'])
+def update_positions():
+    positions_data = get_open_positions()
+    # You can pass positions_data to your HTML template or return it as JSON
+    return jsonify(positions_data)
+
+
 def calculate_get_stock_price(ticker):
     return str(yf.Ticker(ticker).history(period='1y').iloc[-1].Close)
 
@@ -480,10 +536,10 @@ def process_user_input():
     session['messages'].append({'role': 'user', 'content': user_input})
 
     try:
-        response = client.chat.completions.create(model='gpt-3.5-turbo-0613',
-                                                  messages=session['messages'],
-                                                  functions=functions,
-                                                  function_call='auto')
+        response = openai.ChatCompletion.create(model='gpt-3.5-turbo-0613',
+                                                messages=session['messages'],
+                                                functions=functions,
+                                                function_call='auto')
 
         response_message = response.choices[0].message
 
@@ -506,8 +562,8 @@ def process_user_input():
                 }
             )
 
-            second_response = client.chat.completions.create(model='gpt-3.5-turbo-0613',
-                                                             messages=session['messages'])
+            second_response = openai.ChatCompletion.create(model='gpt-3.5-turbo-0613',
+                                                           messages=session['messages'])
 
             final_response = second_response.choices[0].message.content
             return jsonify({'response': final_response})

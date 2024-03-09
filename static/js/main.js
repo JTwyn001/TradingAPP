@@ -10,9 +10,9 @@ function updateChartAndButtonText(text, symbol) {
         "width": "100%",
         "height": "96%",
         "symbol": symbol, // Use the symbol parameter to dynamically set the symbol
-        "interval": "D",
+        "interval": "1",
         "timezone": "Etc/UTC",
-        "theme": "light",
+        "theme": "dark",
         "style": "1",
         "locale": "en",
         "toolbar_bg": "#f1f3f6",
@@ -59,7 +59,7 @@ $(document).ready(function() {
     });
 
     // Initialize with a default symbol, if needed
-    updateChartAndButtonText("Choose Instrument", "NASDAQ:AAPL");
+    updateChartAndButtonText("Choose Instrument", "BTCUSD");
 });
 
 $('#GetPredictionsBtn').click(function() {
@@ -104,6 +104,83 @@ $('#GetPredictionsBtn').click(function() {
         }
     });
 });
+
+document.getElementById('AccountBtn').addEventListener('click', function() {
+    fetch('/update_positions')
+        .then(response => response.json())
+        .then(data => {
+            // Use the data to update the HTML elements for open positions
+            // This part will depend on how your HTML is structured
+            const positionsContainer = document.getElementById('positions');
+            positionsContainer.innerHTML = ''; // Clear existing content
+            data.forEach(pos => {
+                const posElement = document.createElement('div');
+                posElement.innerHTML = `${pos.symbol}: <span style="color: ${pos.profit >= 0 ? 'green' : 'red'}">${pos.profit.toFixed(2)}</span>`;
+                positionsContainer.appendChild(posElement);
+            });
+        })
+        .catch(error => console.log('Error:', error));
+});
+
+
+function updateAccountInfo() {
+    fetch('/get_account_info')
+        .then(response => response.json())
+        .then(data => {
+            if(data.error) {
+                console.log('Error fetching account info:', data.error);
+            } else {
+                document.getElementById('balance').innerText = data.balance.toFixed(2);
+                document.getElementById('equity').innerText = data.equity.toFixed(2);
+            }
+        })
+        .catch(error => console.log('Error:', error));
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    updateAccountInfo(); // Update on page load
+});
+
+document.getElementById('AccountBtn').addEventListener('click', function() {
+    updateAccountInfo(); // Update on button click
+});
+
+function updatePositionsDisplay() {
+    const positionsContainer = document.getElementById('positions');
+    positionsContainer.innerHTML = ''; // Clear existing content
+
+    positions.forEach(pos => {
+        const posElement = document.createElement('span');
+        posElement.textContent = `${pos.symbol}: ${pos.profit} `;
+        // Assign class based on profit or loss
+        posElement.classList.add(pos.profit >= 0 ? 'profit' : 'loss');
+        positionsContainer.appendChild(posElement);
+    });
+}
+
+setInterval(() => {
+    fetch('/path-to-your-flask-route')
+        .then(response => response.json())
+        .then(data => {
+            // Update balance and equity
+            document.getElementById('balance').textContent = `${data.balance.toFixed(2)} GBP`;
+            document.getElementById('equity').textContent = `${data.equity.toFixed(2)} GBP`;
+            document.getElementById('balance').style.color = 'green';
+            document.getElementById('equity').style.color = 'green';
+
+            // Update open positions
+            const positionsContainer = document.getElementById('positions');
+            positionsContainer.innerHTML = ''; // Clear current positions
+            data.positions.forEach(pos => {
+                const posElement = document.createElement('div');
+                posElement.textContent = `${pos.symbol}: ${pos.profit.toFixed(2)} ${pos.currency}`;
+                posElement.style.color = pos.profit >= 0 ? 'green' : 'red';
+                positionsContainer.appendChild(posElement);
+            });
+        })
+        .catch(error => console.error('Failed to fetch account info:', error));
+}, 1000); // Update every 2 seconds
+
 
 $(document).ready(function() {
 
