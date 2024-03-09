@@ -12,7 +12,7 @@ function updateChartAndButtonText(text, symbol) {
         "symbol": symbol, // Use the symbol parameter to dynamically set the symbol
         "interval": "D",
         "timezone": "Etc/UTC",
-        "theme": "light",
+        "theme": "dark",
         "style": "1",
         "locale": "en",
         "toolbar_bg": "#f1f3f6",
