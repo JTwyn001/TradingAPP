@@ -4,28 +4,7 @@ import time
 import numpy as np
 from datetime import datetime, timedelta
 
-mt.initialize()
 
-if not mt.initialize():
-    print("initialize() failed, error code =", mt.last_error())
-    quit()
-else:
-    print('Connected to MetaTrader5')
-
-login = 51684010
-password = 'd&CISL465!tBzO'
-server = 'ICMarketsSC-Demo'
-
-mt.login(login, password, server)
-
-account_info = mt.account_info()
-print(account_info)
-
-symbol_info = mt.symbol_info("BTCUSD")._asdict()
-print(symbol_info)
-
-symbol_price = mt.symbol_info_tick("BTCUSD")._asdict()
-print(symbol_price)
 
 
 # Sending Market Order Crossover Strategy *1
@@ -242,10 +221,28 @@ if __name__ == '__main__':
     fsma_period = 5
     ssma_period = 30
 
-    # connecting to mt5
     mt.initialize()
-    if mt.initialize():
+
+    if not mt.initialize():
+        print("initialize() failed, error code =", mt.last_error())
+        quit()
+    else:
         print('Connected to MetaTrader5')
+
+    login = 51684010
+    password = 'd&CISL465!tBzO'
+    server = 'ICMarketsSC-Demo'
+
+    mt.login(login, password, server)
+
+    account_info = mt.account_info()
+    print(account_info)
+
+    symbol_info = mt.symbol_info("BTCUSD")._asdict()
+    print(symbol_info)
+
+    symbol_price = mt.symbol_info_tick("BTCUSD")._asdict()
+    print(symbol_price)
 
     while True:
         # calculating account exposure

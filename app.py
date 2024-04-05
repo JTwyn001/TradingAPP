@@ -7,6 +7,7 @@ import os
 import platform
 import openai
 import MetaTrader5 as mt
+from mt5 import market_order, close_order, get_exposure
 import time
 import numpy as np  # The Numpy numerical computing library
 import pandas as pd  # The Pandas data science library
@@ -239,9 +240,14 @@ def preprocess_data_for_lstm(ticker, feature_scaler):
     return features_reshaped
 
 
+# Global dictionary to store prediction values
+prediction_values = {}
+
+
 # Function for LSTM prediction
 @app.route('/get_predictions', methods=['POST'])
 def get_predictions():
+    global prediction_values
     # Extract the selected stocks from the request
     selected_stocks = request.json['selectedStocks']
 
@@ -266,13 +272,21 @@ def get_predictions():
 
             # Get predictions from the model
             predicted_change_scaled = model.predict(prepared_data)
-            predicted_change = target_scaler.inverse_transform(predicted_change_scaled.reshape(-1, 1))
+            predicted_change = target_scaler.inverse_transform(predicted_change_scaled.reshape(-1, 1))[0][0]
+
+            print(f"Received raw prediction values: {prediction_values}")
+
+            # Store the raw prediction value
+            prediction_values[ticker] = float(predicted_change)
 
             # Print the value that determines the recommendation
-            print(f"Predicted change for {ticker}: {predicted_change[0][0]}")
+            # After storing all predictions
+            for ticker, value in prediction_values.items():
+                print(f"{ticker}: {value} (Type: {type(value)})")
 
-            recommendation = 'BUY' if predicted_change[0][0] > 200 else 'SELL'
+            recommendation = 'BUY' if predicted_change > 200 else 'SELL'
             stock_predictions[ticker] = recommendation
+            print(f"Predicted change for {ticker}: {predicted_change}")
         except Exception as e:
             print(f"Exception processing {ticker}: {e}")
             stock_predictions[ticker] = f'Error: {str(e)}'
@@ -280,7 +294,85 @@ def get_predictions():
     return jsonify(stock_predictions)
 
 
-@app.route('/path-to-your-flask-route')
+@app.route('/get_trade_predictions', methods=['POST'])
+def get_trade_predictions():
+    # Extract the selected stocks from the request
+    selected_stocks = request.json['selectedStocks']
+
+    # Load the latest model and scaler dynamically
+    model, feature_scaler, target_scaler = load_latest_model_and_scaler()
+
+    trade_predictions = {}
+    for ticker in selected_stocks:
+        try:
+            prepared_data = preprocess_data_for_lstm(ticker, feature_scaler)
+            predicted_change_scaled = model.predict(prepared_data)
+            predicted_change = target_scaler.inverse_transform(predicted_change_scaled.reshape(-1, 1))[0][0]
+            trade_predictions[ticker] = float(predicted_change)
+        except Exception as e:
+            print(f"Exception processing {ticker}: {e}")
+            # Instead of returning an error string, consider returning a default value or omitting the ticker
+            trade_predictions[ticker] = 0  # Default value or use `None` and handle it on the frontend
+
+    return jsonify(trade_predictions)
+
+
+def allocate_funds(total_funds, prediction_values):
+    # Ensure all values are numeric
+    for value in prediction_values.values():
+        if not isinstance(value, (int, float)):
+            raise ValueError(f"Non-numeric prediction value encountered: {value}")
+
+    # Normalize prediction values to get allocation percentages
+    total_prediction = sum(prediction_values.values())
+    allocation_percentages = {ticker: (value / total_prediction) for ticker, value in prediction_values.items()}
+
+    # Allocate funds based on percentages
+    allocations = {ticker: total_funds * percentage for ticker, percentage in allocation_percentages.items()}
+    return allocations
+
+
+@app.route('/execute_lstm_trades', methods=['POST'])
+def execute_lstm_trades():
+    try:
+        data = request.get_json()
+        prediction_values = data.get('predictionValues', {})
+        print(f"Received prediction values: {prediction_values}")
+        total_funds = 100000  # Fixed total funds for trading
+        # Right after receiving prediction_values
+        # Ensure all values are numeric
+        for ticker, value in prediction_values.items():
+            try:
+                print(f"Received raw prediction values: {prediction_values}")
+                # Convert to float and update the dictionary to ensure numeric type
+                prediction_values[ticker] = float(value)
+                print(f"{ticker}: {value} (Type: {type(value)})")
+            except ValueError as e:
+                # Handle the case where conversion to float fails
+                return jsonify({'error': f'Invalid prediction value for {ticker}: {value}'}), 400
+
+        # Allocate funds based on LSTM prediction values (you'll need to implement this)
+        allocations = allocate_funds(total_funds, prediction_values)
+        trade_results = []  # To store the results of each trade
+        # Execute trades based on allocations
+        for ticker, allocation in allocations.items():
+            current_price = get_last_price(ticker)  # Fetch current price of the ticker
+            units = allocation / current_price  # Calculate number of units based on allocation and price
+            adjusted_units = max(0.1, round(units / 0.1) * 0.1)  # Adjust units to the nearest multiple of 0.1
+            actual_funds_used = adjusted_units * current_price  # Calculate actual funds used based on adjusted units
+
+            # Execute trade
+            result = market_order(ticker, adjusted_units, 'buy', deviation=5, magic=100, stoploss=0, takeprofit=0)
+            print(f"Executed trade for {ticker}: {result}")
+            trade_results.append({ticker: {'result': result, 'actualFundsUsed': actual_funds_used}})
+        return jsonify({'message': 'Executed LSTM-based trades', 'tradeResults': trade_results})
+
+    except Exception as e:
+        # Make sure to return a JSON response even in case of error
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/get_account_info')
 def get_account_info():
     if not mt.initialize():
         return jsonify({'error': 'Failed to initialize MT5'}), 500
@@ -589,4 +681,4 @@ def open_browser():
 if __name__ == '__main__':
     # Open the browser
     open_browser()
-    app.run(debug=True, port=9000)  # Changed Flask to run on port 8000
+    app.run(debug=True, port=9000)  # Changed Flask to run on por

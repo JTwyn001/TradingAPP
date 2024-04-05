@@ -122,6 +122,70 @@ document.getElementById('AccountBtn').addEventListener('click', function() {
         .catch(error => console.log('Error:', error));
 });
 
+let predictionData = {};
+
+// Function to fetch predictions
+function fetchPredictions(selectedStocks) {
+    return fetch('/get_trade_predictions', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ selectedStocks: selectedStocks }),
+    })
+        .then(response => response.json())
+        .catch((error) => {
+            console.error('Error fetching predictions:', error);
+        });
+}
+
+// Function to execute trades
+function executeTrades() {
+    // Filter out tickers with non-numeric prediction values
+    let validPredictionData = {};
+    for (let [ticker, value] of Object.entries(predictionData)) {
+        if (!isNaN(value)) {  // Check if the value is numeric
+            validPredictionData[ticker] = value;
+        } else {
+            console.error(`Skipping trade for ${ticker} due to invalid prediction value: ${value}`);
+        }
+    }
+
+    return fetch('/execute_lstm_trades', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ predictionValues: validPredictionData }),
+    })
+    .then(response => response.json())
+    .then(data => console.log('Trade Execution Response:', data))
+    .catch((error) => console.error('Error executing trades:', error));
+}
+
+function getSelectedStocks() {
+    let selectedStocks = [];
+    // Iterate over each dropdown item and extract the symbol
+    $('.dropdown-menu .dropdown-item').each(function() {
+        selectedStocks.push($(this).data('symbol'));
+    });
+    return selectedStocks;
+}
+
+
+// Function to handle Trade Stock button click
+function handleTradeStockClick() {
+    const selectedStocks = getSelectedStocks();  // Implement this function to get the selected stocks from your UI
+
+    fetchPredictions(selectedStocks).then(predictions => {
+        console.log('Sending prediction data:', predictionData);
+        predictionData = predictions;  // Store the fetched predictions
+        executeTrades().then(tradeResponse => {
+            console.log('Trade Execution Response:', tradeResponse);  // Log or handle the trade execution response
+        });
+    });
+}
+
+// Add event listener to the Trade Stock button
+document.getElementById('TradeStockBtn').addEventListener('click', handleTradeStockClick);
 
 function updateAccountInfo() {
     fetch('/get_account_info')
@@ -159,7 +223,7 @@ function updatePositionsDisplay() {
 }
 
 setInterval(() => {
-    fetch('/path-to-your-flask-route')
+    fetch('/get_account_info')
         .then(response => response.json())
         .then(data => {
             // Update balance and equity
