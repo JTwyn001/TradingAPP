@@ -5,13 +5,27 @@ import numpy as np
 from datetime import datetime, timedelta
 
 
-
-
 # Sending Market Order Crossover Strategy *1
 def market_order(symbol, volume, order_type, deviation, magic, stoploss, takeprofit):
     tick = mt.symbol_info_tick(symbol)
+    symbol_info = mt.symbol_info(symbol)
 
-    order_dict = {'buy': 0, 'sell': 1}
+    if tick is None or symbol_info is None:
+        print(f"No tick data or symbol info for {symbol}. The symbol may not exist or the market is closed.")
+        return None
+
+    if not symbol_info.visible:
+        print(f"Symbol {symbol} is not visible. Trying to make it visible.")
+        if not mt.symbol_select(symbol, True):
+            print(f"Failed to make symbol {symbol} visible.")
+            return None
+        tick = mt.symbol_info_tick(symbol)  # Try to get tick data again
+
+    if tick is None:
+        print(f"Failed to get tick data for {symbol}.")
+        return None
+
+    order_dict = {'buy': mt.ORDER_TYPE_BUY, 'sell': mt.ORDER_TYPE_SELL}
     price_dict = {'buy': tick.ask, 'sell': tick.bid}
 
     request = {
@@ -37,14 +51,35 @@ def market_order(symbol, volume, order_type, deviation, magic, stoploss, takepro
 
 # Closing an order from the ticket ID
 def close_order(ticket):
+    # Ensure MetaTrader 5 terminal is initialized
+    if not mt.initialize():
+        print("initialize() failed. Error code =", mt.last_error())
+        return None
+
     positions = mt.positions_get()
 
     for pos in positions:
-        tick = mt.symbol_info_tick(pos.symbol)
-        type_dict = {0: 1, 1: 0}  # 0 for buy, 1 for sale. so inverting to close pos
-        price_dict = {0: tick.ask, 1: tick.bid}
-
         if pos.ticket == ticket:
+            tick = mt.symbol_info_tick(pos.symbol)
+            symbol_info = mt.symbol_info(pos.symbol)
+
+            # Check for tick and symbol information
+            if tick is None or symbol_info is None:
+                print(f"No tick data or symbol info for {pos.symbol}. The symbol may not exist or the market is closed.")
+                continue
+
+            # Ensure the symbol is visible
+            if not symbol_info.visible:
+                print(f"Symbol {pos.symbol} is not visible. Trying to make it visible.")
+                if not mt.symbol_select(pos.symbol, True):
+                    print(f"Failed to make symbol {pos.symbol} visible.")
+                    continue
+                tick = mt.symbol_info_tick(pos.symbol)  # Retrieve tick data again
+
+            # Invert the trade type for closing the position
+            type_dict = {mt.ORDER_TYPE_BUY: mt.ORDER_TYPE_SELL, mt.ORDER_TYPE_SELL: mt.ORDER_TYPE_BUY}
+            price_dict = {mt.ORDER_TYPE_BUY: tick.bid, mt.ORDER_TYPE_SELL: tick.ask}
+
             request = {
                 "action": mt.TRADE_ACTION_DEAL,
                 "position": pos.ticket,
@@ -61,11 +96,12 @@ def close_order(ticket):
                 "type_filling": mt.ORDER_FILLING_IOC,
             }
 
-        order_result = mt.order_send(request)
-        print(order_result)
-        return order_result
+            order_result = mt.order_send(request)
+            print(order_result)
+            return order_result
 
-    return 'Ticket does not exist'
+    print(f"Ticket {ticket} does not exist.")
+    return None
 
 
 # function for symbol exposure
@@ -207,7 +243,7 @@ def rsi_signal(data, overbought_level=70, oversold_level=30):
 
 if __name__ == '__main__':
     # strategy params
-    SYMBOL = "BTCUSD"
+    SYMBOL = "AVGO.NAS"
     TIMEFRAME = mt.TIMEFRAME_D1  # TIMEFRAME_D1, TIMEFRAME
     VOLUME = 1.0  # FLOAT
     DEVIATION = 5  # INTEGER
@@ -235,13 +271,20 @@ if __name__ == '__main__':
 
     mt.login(login, password, server)
 
+    # Get all symbols
+    symbols = mt.symbols_get()
+
+    # Print out symbol names
+    for symbol in symbols:
+        print(symbol.name)
+
     account_info = mt.account_info()
     print(account_info)
 
-    symbol_info = mt.symbol_info("BTCUSD")._asdict()
+    symbol_info = mt.symbol_info("AVGO.NAS")._asdict()
     print(symbol_info)
 
-    symbol_price = mt.symbol_info_tick("BTCUSD")._asdict()
+    symbol_price = mt.symbol_info_tick("AVGO.NAS")._asdict()
     print(symbol_price)
 
     while True:
@@ -259,7 +302,7 @@ if __name__ == '__main__':
 
         # trading logic
         # if direction == 'buy' and bollsignal == 'buy' and rsisignal == 'buy':
-        if rsisignal == 'buy':
+        if direction == 'buy':
             # if a BUY signal is detected, close all short orders
             for pos in mt.positions_get():
                 if pos.type == 1:  # pos.type == 1 means a sell order
@@ -270,7 +313,7 @@ if __name__ == '__main__':
                              tick.bid + TP_SD * sd)
 
         # elif direction == 'sell' and bollsignal == 'sell' and rsisignal == 'sell':
-        elif rsisignal == 'sell':
+        elif direction == 'sell':
             # if a SELL signal is detected, close all short orders
             for pos in mt.positions_get():
                 if pos.type == 0:  # pos.type == 0 means a buy order

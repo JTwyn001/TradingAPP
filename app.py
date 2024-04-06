@@ -52,12 +52,6 @@ app = Flask(__name__, static_folder='static', template_folder='templates')
 app.secret_key = 'algotradingproject'
 
 
-# trained SPY model saved as 'lstm_model_20240304_172043.h5'
-# lstm_model = load_model('./models/lstm_model_20240304_212449.h5')
-
-# scaler = joblib.load('./scalers/lstm_scaler_20240304_172043.pkl')
-
-
 @app.route('/')
 def index():
     return render_template('index.html')  # Ensure you have 'index.html' in the templates folder
@@ -154,10 +148,18 @@ def calculate_momentum_scores(data):
 
 
 def get_last_price(ticker):
-    # Fetch the most recent closing price for the ticker
-    data = yf.download(tickers=ticker, period='1d')
-    last_price = data['Close'].iloc[-1]
-    return last_price
+    # Ensure MT5 is initialized and connected
+    if not mt.initialize():
+        print("initialize() failed, error code =", mt.last_error())
+        quit()
+
+    # Fetch the latest ask price for the ticker
+    tick = mt.symbol_info_tick(ticker)
+    if tick is None:
+        print(f"No tick data available for {ticker}.")
+        return None  # Handle this case as needed in your application
+
+    return tick.ask
 
 
 # Function to load the latest model and scaler
@@ -332,6 +334,28 @@ def allocate_funds(total_funds, prediction_values):
     return allocations
 
 
+def find_mt5_symbol(ticker):
+    # Define a list of common exchange suffixes used in MT5
+    exchange_suffixes = ['.NAS', '.NYSE', '.LSE', '.ASE', '.TSX']  # Add more as needed
+
+    for suffix in exchange_suffixes:
+        potential_symbol = f"{ticker}{suffix}"
+        print(f"Checking MT5 for symbol: {potential_symbol}")  # Debug print
+
+        if mt.symbol_select(potential_symbol, True):
+            symbol_info = mt.symbol_info(potential_symbol)
+            if symbol_info is not None:
+                print(f"Found and made visible: {potential_symbol}")
+                return potential_symbol
+            else:
+                print(f"Symbol {potential_symbol} could not be made visible.")
+        else:
+            print(f"Symbol {potential_symbol} does not exist.")
+
+    print(f"No match found for {ticker} in MT5.")  # Debug print
+    return None  # Return None if no matching symbol is found
+
+
 @app.route('/execute_lstm_trades', methods=['POST'])
 def execute_lstm_trades():
     try:
@@ -339,34 +363,56 @@ def execute_lstm_trades():
         prediction_values = data.get('predictionValues', {})
         print(f"Received prediction values: {prediction_values}")
         total_funds = 100000  # Fixed total funds for trading
-        # Right after receiving prediction_values
-        # Ensure all values are numeric
-        for ticker, value in prediction_values.items():
+
+        # Ensure all prediction values are numeric and log them
+        for ticker in list(prediction_values.keys()):  # Use list to avoid dictionary size change during iteration
             try:
-                print(f"Received raw prediction values: {prediction_values}")
-                # Convert to float and update the dictionary to ensure numeric type
-                prediction_values[ticker] = float(value)
-                print(f"{ticker}: {value} (Type: {type(value)})")
+                prediction_values[ticker] = float(prediction_values[ticker])
             except ValueError as e:
-                # Handle the case where conversion to float fails
-                return jsonify({'error': f'Invalid prediction value for {ticker}: {value}'}), 400
+                print(f"Invalid prediction value for {ticker}: {prediction_values[ticker]}")
+                return jsonify({'error': f'Invalid prediction value for {ticker}: {prediction_values[ticker]}'}), 400
 
         # Allocate funds based on LSTM prediction values (you'll need to implement this)
         allocations = allocate_funds(total_funds, prediction_values)
         trade_results = []  # To store the results of each trade
-        # Execute trades based on allocations
+
+        # Ensure all values are numeric
         for ticker, allocation in allocations.items():
-            current_price = get_last_price(ticker)  # Fetch current price of the ticker
-            units = allocation / current_price  # Calculate number of units based on allocation and price
-            adjusted_units = max(0.1, round(units / 0.1) * 0.1)  # Adjust units to the nearest multiple of 0.1
-            actual_funds_used = adjusted_units * current_price  # Calculate actual funds used based on adjusted units
+            # Use the find_mt5_symbol function to attempt to find the MT5 symbol
+            mt5_symbol = find_mt5_symbol(ticker)
+            if mt5_symbol is None:
+                print(f"No matching MT5 symbol found for {ticker}. Skipping...")
+                continue
 
-            # Execute trade
-            result = market_order(ticker, adjusted_units, 'buy', deviation=5, magic=100, stoploss=0, takeprofit=0)
-            print(f"Executed trade for {ticker}: {result}")
-            trade_results.append({ticker: {'result': result, 'actualFundsUsed': actual_funds_used}})
+            try:
+                # Fetch the latest tick data for the ticker Using the matched MT5 symbol
+                tick = mt.symbol_info_tick(mt5_symbol)
+                if tick is None:
+                    print(f"No tick data available for {mt5_symbol}. Skipping...")
+                    continue
+
+                # Fetch symbol-specific constraints
+                symbol_info = mt.symbol_info(mt5_symbol)
+                if symbol_info is None:
+                    print(f"No symbol info available for {ticker}. Skipping...")
+                    continue
+
+                min_volume = symbol_info.min_volume
+                max_volume = symbol_info.max_volume
+                volume_step = symbol_info.volume_step
+
+                # Calculate the units based on allocation and price, and adjust according to volume constraints
+                units = allocation / tick.ask
+                units = max(min_volume, min(units, max_volume))  # Ensure units are within min and max volume
+                units = round(units / volume_step) * volume_step  # Adjust units to the nearest volume step
+
+                # Execute trade
+                result = market_order(mt5_symbol, units, 'buy', 5, 100, 0, 0)
+                print(f"Executed trade for {mt5_symbol}: {result}")
+                trade_results.append({mt5_symbol: {'result': result, 'units': units}})
+            except Exception as e:
+                print(f"Error executing trade for {ticker}: {e}")
         return jsonify({'message': 'Executed LSTM-based trades', 'tradeResults': trade_results})
-
     except Exception as e:
         # Make sure to return a JSON response even in case of error
         return jsonify({'error': str(e)}), 500
