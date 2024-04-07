@@ -39,6 +39,14 @@
 
             <div id="scan-marketMessage" style="display: none; color: green; font-weight: bold;">Successfully filtered highest momentum stocks in S&P 500 to dropdown</div>
 
+            <button id="ScanForexBtn" class="btn btn-primary glow-on-hover scan-market-button w-100 my-2">SCAN FOREX MARKET</button>
+            <div class="progress" id="forexloadingBar" style="height: 10px;">
+                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%">
+                    <span id="forexprogressPercentage">0%</span>
+                </div>
+            </div>
+
+
             <div class="checkbox-container d-flex">
             <!-- Checkbox for LSTM -->
                 <div class="form-check my-2">

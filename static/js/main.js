@@ -1,7 +1,13 @@
 // JavaScript function to update button text and chart
 function updateChartAndButtonText(text, symbol) {
+    var suffixesToRemove = ['.NYSE', '.NAS', '.LSE', '.ASE', '.TSX', '.ETR']; // Add more as needed
     var button = document.getElementById('dropdownMenuButton1');
     button.innerHTML = text + ' <i class="bi bi-caret-down-fill"></i>';
+    // Remove suffixes from symbol
+    var cleanedSymbol = symbol;
+    suffixesToRemove.forEach(function(suffix) {
+        cleanedSymbol = cleanedSymbol.replace(suffix, '');
+    });
 
     // Update TradingView widget with the selected symbol
     new TradingView.widget({
@@ -9,7 +15,7 @@ function updateChartAndButtonText(text, symbol) {
         "autosize": false,
         "width": "100%",
         "height": "96%",
-        "symbol": symbol, // Use the symbol parameter to dynamically set the symbol
+        "symbol": cleanedSymbol, // Use the symbol parameter to dynamically set the symbol
         "interval": "1",
         "timezone": "Etc/UTC",
         "theme": "dark",
@@ -209,18 +215,6 @@ document.getElementById('AccountBtn').addEventListener('click', function() {
     updateAccountInfo(); // Update on button click
 });
 
-function updatePositionsDisplay() {
-    const positionsContainer = document.getElementById('positions');
-    positionsContainer.innerHTML = ''; // Clear existing content
-
-    positions.forEach(pos => {
-        const posElement = document.createElement('span');
-        posElement.textContent = `${pos.symbol}: ${pos.profit} `;
-        // Assign class based on profit or loss
-        posElement.classList.add(pos.profit >= 0 ? 'profit' : 'loss');
-        positionsContainer.appendChild(posElement);
-    });
-}
 
 setInterval(() => {
     fetch('/get_account_info')

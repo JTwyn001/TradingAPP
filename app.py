@@ -1,5 +1,6 @@
 import datetime
 import json
+import logging
 
 from flask import Flask, request, jsonify, session, render_template
 # from flask_cors import CORS
@@ -7,7 +8,7 @@ import os
 import platform
 import openai
 import MetaTrader5 as mt
-from mt5 import market_order, close_order, get_exposure
+from mt5 import market_order, get_top_10_momentum_stocks, close_order, get_exposure
 import time
 import numpy as np  # The Numpy numerical computing library
 import pandas as pd  # The Pandas data science library
@@ -16,11 +17,11 @@ import requests  # The requests library for HTTP requests in Python
 import xlsxwriter  # The XlsxWriter library for
 import math  # The Python math module
 from scipy import stats  # The SciPy stats module
-
+from pandas.tseries.offsets import BDay
 import webbrowser
 import matplotlib.pyplot as plt
 import yfinance as yf
-
+import datetime
 import tensorflow as tf
 import keras
 from keras import optimizers
@@ -59,7 +60,7 @@ def index():
 
 @app.route('/trading-ai')
 def trading_ai():
-    sp500_stocks = pd.read_csv('sp_500_stocks.csv')
+    sp500_stocks = pd.read_csv('mt5_stock_tickers.csv')
     top_10_stocks = sp500_stocks['Ticker'].head(10).tolist()  # Assuming the column name is 'Ticker'
     return render_template('trading_ai.html', top_10_stocks=top_10_stocks)
 
@@ -67,61 +68,34 @@ def trading_ai():
 @app.route('/get_data/<symbol>')
 def get_data(symbol):
     try:
-        # Fetch historical data for the symbol from Yahoo Finance
-        data = yf.download(symbol, period="1d", interval="1m")
-        # Convert the data to a list of dictionaries for JSON response
-        response_data = data.reset_index().to_dict('records')
-        return jsonify(response_data)
+        # Ensure MT5 is initialized
+        if not mt.initialize():
+            print("initialize() failed, error code =", mt.last_error())
+            return {'error': 'Failed to initialize MT5'}
+
+        # Fetch the most recent bars from MetaTrader 5
+        rates = mt.copy_rates_from_pos(symbol, mt.TIMEFRAME_M1, 0, 1440)  # Last day's data, assuming 1 min timeframe
+
+        if rates is None or len(rates) == 0:
+            return {'error': 'No data available for the symbol'}
+
+        # Convert the rates to a list of dictionaries
+        response_data = []
+        for rate in rates:
+            rate_dict = {
+                'time': datetime.datetime.fromtimestamp(rate['time']).strftime('%Y-%m-%d %H:%M:%S'),
+                'open': rate['open'],
+                'high': rate['high'],
+                'low': rate['low'],
+                'close': rate['close'],
+                'volume': rate['tick_volume']  # or just 'volume' if using real volume
+            }
+            response_data.append(rate_dict)
+
+        return response_data  # Return the list of dictionaries directly
     except Exception as e:
-        return jsonify({'error': str(e)})
-
-
-# Load the list of stocks from a CSV file
-stocks = pd.read_csv('sp_500_stocks.csv')
-
-
-def fetch_data_yfinance(tickers):
-    data = yf.download(tickers, period="1y")
-    return data['Adj Close']  # Adjusted Close Prices over the last year
-
-
-# Assuming 'tickers' is a list of ticker symbols you want to fetch data for
-tickers = ['AAPL', 'MSFT', 'GOOG']  # Example tickers
-data = fetch_data_yfinance(tickers)
-
-# Calculate the one-year price return for each stock
-one_year_returns = data.pct_change().tail(1)
-
-
-# Function to split the stock list into chunks of 100
-def chunks(lst, n):
-    for i in range(0, len(lst), n):
-        yield lst[i:i + n]
-
-
-# Split stocks into groups of 100 and create a list of comma-separated strings
-symbol_groups = list(chunks(stocks['Ticker'], 100))
-symbol_strings = [','.join(group) for group in symbol_groups]
-
-# Define columns for the DataFrame
-columns = ['Ticker', 'Price', 'One-Year Price Return']
-
-# Create an empty DataFrame
-momentum_dataframe = pd.DataFrame(columns=columns)
-
-# Sort the DataFrame by 'One-Year Price Return' and select the top 10
-momentum_dataframe.sort_values('One-Year Price Return', ascending=False, inplace=True)
-top_10_momentum_stocks = momentum_dataframe.head(10)
-
-
-# Function to get top 10 momentum stocks
-def get_top_10_momentum_stocks():
-    sp500_stocks = pd.read_csv('sp_500_stocks.csv')
-    tickers = sp500_stocks['Ticker'].tolist()
-    historical_data = yf.download(tickers, period="1y")['Adj Close']
-    returns = historical_data.pct_change().mean() * 252  # Assuming 252 trading days in a year
-    top_10_momentum = returns.nlargest(10)
-    return top_10_momentum.index.tolist()
+        print(f"Error: {str(e)}")  # Print the actual error message
+        return {'error': str(e)}
 
 
 # Flask route to scan market and get top 10 momentum stocks
@@ -129,37 +103,10 @@ def get_top_10_momentum_stocks():
 def scan_market():
     try:
         top_10_stocks = get_top_10_momentum_stocks()
+        print("Top 10 Momentum Stocks:", top_10_stocks)
         return jsonify(top_10_stocks)
     except Exception as e:
         return jsonify({'error': str(e)})
-
-
-# Function to get historical stock data using Yahoo Finance
-def get_historical_data(tickers):
-    data = yf.download(tickers, period="1y")['Adj Close']
-    return data
-
-
-# Function to calculate momentum scores
-def calculate_momentum_scores(data):
-    returns = data.pct_change().dropna()
-    momentum_scores = returns.mean() * 252 / returns.std()  # Example: Annualized Sharpe-like momentum score
-    return momentum_scores
-
-
-def get_last_price(ticker):
-    # Ensure MT5 is initialized and connected
-    if not mt.initialize():
-        print("initialize() failed, error code =", mt.last_error())
-        quit()
-
-    # Fetch the latest ask price for the ticker
-    tick = mt.symbol_info_tick(ticker)
-    if tick is None:
-        print(f"No tick data available for {ticker}.")
-        return None  # Handle this case as needed in your application
-
-    return tick.ask
 
 
 # Function to load the latest model and scaler
@@ -185,61 +132,101 @@ def load_latest_model_and_scaler(model_dir='./models', scaler_dir='./scalers'):
 
 # Function to fetch recent data
 def fetch_recent_data(ticker, window_size=30):
+    if not mt.initialize():
+        print("MT5 initialize() failed, error code =", mt.last_error())
+        return None
+
     try:
-        end_date = datetime.datetime.now().strftime('%Y-%m-%d')
-        # Increase the buffer to account for weekends and holidays
-        start_date = (datetime.datetime.now() - datetime.timedelta(days=1095)).strftime('%Y-%m-%d')
+        # Define the date range for data fetching
+        end_date = datetime.datetime.now()
+        start_date = end_date - datetime.timedelta(days=window_size)
 
-        print(f"Fetching data for {ticker} from {start_date} to {end_date}")
-        data = yf.download(ticker, start=start_date, end=end_date)
+        # Convert to POSIX timestamps
+        utc_from = int(datetime.datetime.timestamp(start_date))
+        utc_to = int(datetime.datetime.timestamp(end_date))
 
-        if data.empty:
+        # Fetch historical data from MT5
+        rates = mt.copy_rates_range(ticker, mt.TIMEFRAME_D1, utc_from, utc_to)
+
+        if rates is None or len(rates) == 0:
             print(f"No recent data fetched for {ticker}. Skipping...")
-            return None  # Skip this ticker as there's no data
+            return None
 
-        # Add indicators as per model's training
-        data['RSI'] = ta.rsi(data['Close'], length=15)
-        data['EMAF'] = ta.ema(data['Close'], length=20)
-        data['EMAM'] = ta.ema(data['Close'], length=100)
-        data['EMAS'] = ta.ema(data['Close'], length=150)
+        # Convert to DataFrame
+        data = pd.DataFrame(rates)
+        data['time'] = pd.to_datetime(data['time'], unit='s')
+        data.set_index('time', inplace=True)
 
+        # Add technical indicators
+        data['RSI'] = ta.rsi(data['close'], length=15)
+        data['EMAF'] = ta.ema(data['close'], length=20)
+        data['EMAM'] = ta.ema(data['close'], length=100)
+        data['EMAS'] = ta.ema(data['close'], length=150)
+
+        # Clean up any missing data
         data.dropna(inplace=True)
 
         return data
 
     except Exception as e:
         print(f"Error fetching data for {ticker}: {e}")
-        return None  # Return None or handle this case as appropriate in your application
+        return None
 
 
 def preprocess_data_for_lstm(ticker, feature_scaler):
-    # Fetch historical data
-    data = yf.download(tickers=ticker, start='2012-03-11', end='2024-02-10')
+    if not mt.initialize():
+        print("MT5 initialize() failed, error code =", mt.last_error())
+        return None
 
-    # Adding indicators
-    data['RSI'] = ta.rsi(data['Close'], length=15)
-    data['EMAF'] = ta.ema(data['Close'], length=20)
-    data['EMAM'] = ta.ema(data['Close'], length=100)
-    data['EMAS'] = ta.ema(data['Close'], length=150)
+    try:
+        # Define the date range for data fetching
+        end_date = datetime.datetime.now()
+        start_date = end_date - datetime.timedelta(days=365 * 10)  # Fetching data for the last 10 years
 
-    # Ensure all data is complete
-    data.dropna(inplace=True)
+        # Convert to POSIX timestamps
+        utc_from = int(datetime.datetime.timestamp(start_date))
+        utc_to = int(datetime.datetime.timestamp(end_date))
 
-    # Select relevant features for predictions
-    features = data[['Adj Close', 'RSI', 'EMAF', 'EMAM', 'EMAS']].values
+        # Fetch historical data from MT5
+        rates = mt.copy_rates_range(ticker, mt.TIMEFRAME_D1, utc_from, utc_to)
 
-    # Use the passed feature_scaler to scale the features
-    features_scaled = feature_scaler.transform(features)
-    print("Shape of features_scaled:", features_scaled.shape)  # Print the shape
+        if rates is None or len(rates) == 0:
+            print(f"No recent data fetched for {ticker}. Skipping...")
+            return None
 
-    # Ensure there's enough data to create a sequence for LSTM
-    if features_scaled.shape[0] < 30:
-        print(f"Not enough data to create a sequence for {ticker}. Needed 30, got {features_scaled.shape[0]}")
-        return None  # Return None to indicate insufficient data
+        # Convert to DataFrame
+        data = pd.DataFrame(rates)
+        data['time'] = pd.to_datetime(data['time'], unit='s')
+        data.set_index('time', inplace=True)
 
-    features_reshaped = features_scaled[-30:].reshape(1, 30, features_scaled.shape[1])
+        # Adding indicators
+        data['RSI'] = ta.rsi(data['close'], length=15)
+        data['EMAF'] = ta.ema(data['close'], length=20)
+        data['EMAM'] = ta.ema(data['close'], length=100)
+        data['EMAS'] = ta.ema(data['close'], length=150)
 
-    return features_reshaped
+        # Ensure all data is complete
+        data.dropna(inplace=True)
+
+        # Select relevant features for predictions
+        features = data[['close', 'RSI', 'EMAF', 'EMAM', 'EMAS']].values
+
+        # Use the passed feature_scaler to scale the features
+        features_scaled = feature_scaler.transform(features)
+        print("Shape of features_scaled:", features_scaled.shape)  # Print the shape
+
+        # Ensure there's enough data to create a sequence for LSTM
+        if features_scaled.shape[0] < 30:
+            print(f"Not enough data to create a sequence for {ticker}. Needed 30, got {features_scaled.shape[0]}")
+            return None  # Return None to indicate insufficient data
+
+        features_reshaped = features_scaled[-30:].reshape(1, 30, features_scaled.shape[1])
+
+        return features_reshaped
+
+    except Exception as e:
+        print(f"Error processing {ticker}: {e}")
+        return None
 
 
 # Global dictionary to store prediction values
@@ -307,10 +294,14 @@ def get_trade_predictions():
     trade_predictions = {}
     for ticker in selected_stocks:
         try:
+            # Ensure that preprocess_data_for_lstm is fetching and preparing MT5 data correctly
             prepared_data = preprocess_data_for_lstm(ticker, feature_scaler)
-            predicted_change_scaled = model.predict(prepared_data)
-            predicted_change = target_scaler.inverse_transform(predicted_change_scaled.reshape(-1, 1))[0][0]
-            trade_predictions[ticker] = float(predicted_change)
+            if prepared_data is not None:
+                predicted_change_scaled = model.predict(prepared_data)
+                predicted_change = target_scaler.inverse_transform(predicted_change_scaled.reshape(-1, 1))[0][0]
+                trade_predictions[ticker] = float(predicted_change)
+            else:
+                print(f"Insufficient or unavailable data for {ticker}. Skipping...")
         except Exception as e:
             print(f"Exception processing {ticker}: {e}")
             # Instead of returning an error string, consider returning a default value or omitting the ticker
@@ -320,14 +311,16 @@ def get_trade_predictions():
 
 
 def allocate_funds(total_funds, prediction_values):
-    # Ensure all values are numeric
-    for value in prediction_values.values():
-        if not isinstance(value, (int, float)):
-            raise ValueError(f"Non-numeric prediction value encountered: {value}")
+    # Filter out non-numeric and None values from prediction_values
+    valid_predictions = {ticker: value for ticker, value in prediction_values.items() if
+                         isinstance(value, (int, float))}
 
     # Normalize prediction values to get allocation percentages
-    total_prediction = sum(prediction_values.values())
-    allocation_percentages = {ticker: (value / total_prediction) for ticker, value in prediction_values.items()}
+    total_prediction = sum(valid_predictions.values())
+    if total_prediction == 0:
+        raise ValueError("Total prediction value is 0, unable to allocate funds")
+
+    allocation_percentages = {ticker: (value / total_prediction) for ticker, value in valid_predictions.items()}
 
     # Allocate funds based on percentages
     allocations = {ticker: total_funds * percentage for ticker, percentage in allocation_percentages.items()}
@@ -428,7 +421,7 @@ def get_account_info():
     positions_data = [{'symbol': pos.symbol, 'profit': pos.profit, 'currency': '£'} for pos in
                       positions]  # Assuming USD for simplicity
 
-    mt.shutdown()
+    # mt.shutdown()
 
     return jsonify({
         'balance': account_info['balance'],

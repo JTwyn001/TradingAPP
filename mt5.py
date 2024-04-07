@@ -2,7 +2,11 @@ import pandas as pd
 import MetaTrader5 as mt
 import time
 import numpy as np
-from datetime import datetime, timedelta
+import datetime
+import pandas_ta as ta
+from sklearn.preprocessing import StandardScaler  # Assuming you're using StandardScaler for feature scaling
+from pandas.tseries.offsets import BDay
+from scipy import stats
 
 
 # Sending Market Order Crossover Strategy *1
@@ -65,7 +69,8 @@ def close_order(ticket):
 
             # Check for tick and symbol information
             if tick is None or symbol_info is None:
-                print(f"No tick data or symbol info for {pos.symbol}. The symbol may not exist or the market is closed.")
+                print(
+                    f"No tick data or symbol info for {pos.symbol}. The symbol may not exist or the market is closed.")
                 continue
 
             # Ensure the symbol is visible
@@ -240,6 +245,72 @@ def rsi_signal(data, overbought_level=70, oversold_level=30):
 
 # --------------------------End of signals--------------------------------------
 
+# Make sure to have this function in your script or import it if it's defined in another module
+def fetch_historical_data(ticker, start_date, end_date):
+    rates = mt.copy_rates_range(ticker, mt.TIMEFRAME_D1, start_date, end_date)
+    if rates is None or len(rates) == 0:
+        print(f"No data for {ticker}")
+        return None
+    data = pd.DataFrame(rates)
+    data['time'] = pd.to_datetime(data['time'], unit='s')
+    data.set_index('time', inplace=True)
+    return data
+
+
+def get_top_10_momentum_stocks():
+    if not mt.initialize():
+        print("initialize() failed, error code =", mt.last_error())
+        quit()  # Exit the function if MT5 fails to initialize
+
+    sp500_stocks = pd.read_csv('mt5_stock_tickers.csv')
+    tickers = sp500_stocks['Ticker'].tolist()[:1000]
+
+    end_date = pd.Timestamp.now()
+    periods = {
+        'One-Year': end_date - BDay(252),
+        'Six-Month': end_date - BDay(126),
+        'Three-Month': end_date - BDay(63),
+        'One-Month': end_date - BDay(21),
+    }
+
+    # Initialize hqm_dataframe with tickers as the index
+    hqm_dataframe = pd.DataFrame(index=tickers, columns=['One-Year Return Percentile', 'Six-Month Return Percentile',
+                                                         'Three-Month Return Percentile', 'One-Month Return Percentile',
+                                                         'HQM Score'])
+
+    for ticker in tickers:
+        print(f"Fetching data for {ticker}...")
+        price_data = {}
+        for period_name, start_date in periods.items():
+            data = fetch_historical_data(ticker, start_date, end_date)
+            if data is not None:
+                price_return = data['close'].pct_change().dropna().mean() * 252  # Annualized return
+                price_data[period_name] = price_return
+
+        if price_data:
+            # Use temp_df with correct column names
+            temp_df = pd.DataFrame([price_data], columns=periods.keys())
+            for period_name in periods.keys():
+                hqm_dataframe.loc[ticker, period_name + ' Return Percentile'] = stats.percentileofscore(
+                    temp_df[period_name], temp_df.at[0, period_name])
+
+    # Calculate HQM Score as the mean of percentile scores
+    hqm_dataframe['HQM Score'] = hqm_dataframe.mean(axis=1)
+
+    # Reset index to make 'Ticker' a column
+    hqm_dataframe.reset_index(inplace=True)
+    hqm_dataframe.rename(columns={'index': 'Ticker'}, inplace=True)
+
+    # Rank stocks by HQM Score and select top 10
+    top_10_hqm_stocks = hqm_dataframe.sort_values(by='HQM Score', ascending=False).head(10)['Ticker'].tolist()
+
+    return top_10_hqm_stocks
+
+
+# Running the test
+# top_10_momentum_stocks = get_top_10_momentum_stocks()
+# print("Top 10 Momentum Stocks:", top_10_momentum_stocks)
+
 
 if __name__ == '__main__':
     # strategy params
@@ -322,7 +393,7 @@ if __name__ == '__main__':
                 market_order(SYMBOL, VOLUME, 'sell', DEVIATION, MAGIC, tick.bid + SL_SD * sd,
                              tick.bid - TP_SD * sd)
 
-        print('time: ', datetime.now())
+        print('time: ', datetime.datetime.now())
         print('exposure: ', exposure)
         print('last_close: ', last_close)
         print('sma: ', sma)
@@ -334,21 +405,3 @@ if __name__ == '__main__':
 
         # update ever 1s
         time.sleep(1)
-
-num_orders = mt.orders_total()
-num_orders
-
-orders = mt.orders_get()
-orders
-
-num_order_history = mt.history_orders_total(datetime(2023, 10, 1), datetime(2021, 10, 13))
-num_order_history
-
-order_history = mt.history_orders_get(datetime(2023, 10, 1), datetime(2023, 10, 13))
-order_history
-
-num_deal_history = mt.history_deals_total(datetime(2023, 10, 1), datetime(2023, 10, 13))
-num_deal_history
-
-deal_history = mt.history_deals_get(datetime(2023, 10, 1), datetime(2023, 10, 13))
-deal_history
