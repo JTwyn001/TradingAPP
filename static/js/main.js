@@ -3,6 +3,9 @@ function updateChartAndButtonText(text, symbol) {
     var suffixesToRemove = ['.NYSE', '.NAS', '.LSE', '.ASE', '.TSX', '.ETR']; // Add more as needed
     var button = document.getElementById('dropdownMenuButton1');
     button.innerHTML = text + ' <i class="bi bi-caret-down-fill"></i>';
+    var button2 = document.getElementById('dropdownMenuButton2');
+    button2.innerHTML = text + ' <i class="bi bi-caret-down-fill"></i>';
+
     // Remove suffixes from symbol
     var cleanedSymbol = symbol;
     suffixesToRemove.forEach(function(suffix) {
@@ -65,7 +68,7 @@ $(document).ready(function() {
     });
 
     // Initialize with a default symbol, if needed
-    updateChartAndButtonText("Choose Instrument", "BTCUSD");
+    updateChartAndButtonText("Choose Forex Instrument", "BTCUSD");
 });
 
 $('#GetPredictionsBtn').click(function() {
@@ -326,7 +329,7 @@ $(document).ready(function() {
                 progressBar.style.width = width + '%';
                 progressPercentage.textContent = width + '%';
             }
-        }, 125); // Update the progress every 125 milliseconds so it matches the process on terminal
+        }, 200); // Update the progress every 125 milliseconds, so it matches the process on terminal
 
         fetch('/scan-market')
             .then(response => response.json())
@@ -352,11 +355,53 @@ $(document).ready(function() {
                 // Make the success message visible
                 document.getElementById('scan-marketMessage').style.display = 'block';
             }).catch(error => {
-            console.error('Error fetching market data:', error);
+            console.error('Error fetching stock market data:', error);
             // Hide the loading bar in case of error
             document.getElementById('loadingBar').style.display = 'none';
         });
     });
 
+    document.getElementById('ScanForexBtn').addEventListener('click', function() {
+        const forexloadingBar = document.getElementById('forexloadingBar');
+        const progressBar = forexloadingBar.querySelector('.progress-bar');
+        const forexprogressPercentage = forexloadingBar.querySelector('#forexprogressPercentage');
+        let width = 0; // Initial width of the progress bar
+
+        forexloadingBar.style.display = '';
+
+        // Show the loading bar
+        // document.getElementById('loadingBar').style.display = '';
+        const interval = setInterval(function() {
+            if (width >= 100) {
+                clearInterval(interval);
+            } else {
+                width++;
+                progressBar.style.width = width + '%';
+                forexprogressPercentage.textContent = width + '%';
+            }
+        }, 200); // Update the progress every 125 milliseconds, so it matches the process on terminal
+        fetch('/scan-forex-market')
+            .then(response => response.json())
+            .then(data => {
+
+                const dropdownMenu = document.getElementById('dropdownMenuButton2').nextElementSibling;
+                dropdownMenu.innerHTML = '';
+                data.forEach(forex => {
+                    const dropdownItem = document.createElement('a');
+                    dropdownItem.classList.add('dropdown-item');
+                    dropdownItem.href = "#";
+                    dropdownItem.setAttribute('data-symbol', forex);
+                    dropdownItem.textContent = forex.replace(/\.NAS|\.NYSE/, ''); // Removing the exchange part
+                    dropdownItem.addEventListener('click', function() {
+                        updateChartAndButtonText(this.textContent, this.getAttribute('data-symbol'));
+                    });
+                    dropdownMenu.appendChild(dropdownItem);
+                });
+                forexloadingBar.style.display = 'none';
+            }).catch(error => {
+            console.error('Error fetching forex market data:', error);
+            forexloadingBar.style.display = 'none';
+        });
+    });
 
 });

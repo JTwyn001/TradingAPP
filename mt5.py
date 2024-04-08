@@ -263,7 +263,7 @@ def get_top_10_momentum_stocks():
         quit()  # Exit the function if MT5 fails to initialize
 
     sp500_stocks = pd.read_csv('mt5_stock_tickers.csv')
-    tickers = sp500_stocks['Ticker'].tolist()[:1000]
+    tickers = sp500_stocks['Ticker'].tolist()[:50]
 
     end_date = pd.Timestamp.now()
     periods = {
@@ -311,6 +311,45 @@ def get_top_10_momentum_stocks():
 # top_10_momentum_stocks = get_top_10_momentum_stocks()
 # print("Top 10 Momentum Stocks:", top_10_momentum_stocks)
 
+def get_top_10_momentum_forex():
+    if not mt.initialize():
+        print("initialize() failed, error code =", mt.last_error())
+        quit()
+
+    forex_tickers = pd.read_csv('mt5_forex_tickers.csv')
+    tickers = forex_tickers['Ticker'].tolist()[:200]
+
+    end_date = pd.Timestamp.now()
+    periods = {
+        'One-Year': end_date - BDay(252),
+        'Six-Month': end_date - BDay(126),
+        'Three-Month': end_date - BDay(63),
+        'One-Month': end_date - BDay(21),
+    }
+
+    hqm_dataframe = pd.DataFrame(index=tickers, columns=['One-Year Return Percentile', 'Six-Month Return Percentile', 'Three-Month Return Percentile', 'One-Month Return Percentile', 'HQM Score'])
+
+    for ticker in tickers:
+        print(f"Fetching data for {ticker}...")
+        price_data = {}
+        for period_name, start_date in periods.items():
+            data = fetch_historical_data(ticker, start_date, end_date)
+            if data is not None:
+                price_return = data['close'].pct_change().dropna().mean() * 252  # Annualized return
+                price_data[period_name] = price_return
+
+        if price_data:
+            temp_df = pd.DataFrame([price_data], columns=periods.keys())
+            for period_name in periods.keys():
+                hqm_dataframe.loc[ticker, period_name + ' Return Percentile'] = stats.percentileofscore(temp_df[period_name], temp_df.at[0, period_name])
+
+    hqm_dataframe['HQM Score'] = hqm_dataframe.mean(axis=1)
+    hqm_dataframe.reset_index(inplace=True)
+    hqm_dataframe.rename(columns={'index': 'Ticker'}, inplace=True)
+
+    top_10_hqm_forex = hqm_dataframe.sort_values(by='HQM Score', ascending=False).head(10)['Ticker'].tolist()
+
+    return top_10_hqm_forex
 
 if __name__ == '__main__':
     # strategy params

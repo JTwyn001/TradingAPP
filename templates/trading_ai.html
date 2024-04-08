@@ -73,7 +73,7 @@
             <div class="dropdown w-100 my-2">
                 <!-- Modified button with an ID -->
                 <button class="btn btn-secondary glow-on-hover scan-market-button w-100" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
-                    Choose Instrument
+                    Choose Stock Instrument
                     <i class="bi bi-caret-down-fill"></i>
                 </button>
                 <!-- Placeholder for displaying the rankings -->
@@ -83,6 +83,23 @@
                     <!-- Added onClick event to each dropdown item -->
                     {% for stock in top_10_stocks %}
                         <li><a class="dropdown-item" href="#" data-symbol="{{ stock }}">{{ stock }}</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="dropdown w-100 my-2">
+                <!-- Modified button with an ID -->
+                <button class="btn btn-secondary glow-on-hover scan-market-button w-100" type="button" id="dropdownMenuButton2" data-bs-toggle="dropdown" aria-expanded="false">
+                    Choose Forex Instrument
+                    <i class="bi bi-caret-down-fill"></i>
+                </button>
+                <!-- Placeholder for displaying the rankings -->
+                <ul class="dropdown-menu w-100" aria-labelledby="dropdownMenuButton2">
+                    <!-- Dropdown title -->
+                    <li><span class="dropdown-item disabled">Top 10 Scanned Forex Instruments</span></li>
+                    <!-- Added onClick event to each dropdown item -->
+                    {% for stock in top_10_forex %}
+                    <li><a class="dropdown-item" href="#" data-symbol="{{ stock }}">{{ stock }}</a></li>
                     {% endfor %}
                 </ul>
             </div>

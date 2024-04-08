@@ -8,7 +8,8 @@ import os
 import platform
 import openai
 import MetaTrader5 as mt
-from mt5 import market_order, get_top_10_momentum_stocks, close_order, get_exposure
+from mt5 import (market_order, get_top_10_momentum_stocks, get_top_10_momentum_forex,
+                 close_order, get_exposure)
 import time
 import numpy as np  # The Numpy numerical computing library
 import pandas as pd  # The Pandas data science library
@@ -65,6 +66,13 @@ def trading_ai():
     return render_template('trading_ai.html', top_10_stocks=top_10_stocks)
 
 
+@app.route('/trading-ai-forex')
+def trading_ai_forex():
+    sp500_forex = pd.read_csv('mt5_forex_tickers.csv')
+    top_10_forex = sp500_forex['Ticker'].head(10).tolist()  # Assuming the column name is 'Ticker'
+    return render_template('trading_ai.html', top_10_forex=top_10_forex)
+
+
 @app.route('/get_data/<symbol>')
 def get_data(symbol):
     try:
@@ -105,6 +113,17 @@ def scan_market():
         top_10_stocks = get_top_10_momentum_stocks()
         print("Top 10 Momentum Stocks:", top_10_stocks)
         return jsonify(top_10_stocks)
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
+
+# Flask route to scan forex market and get top 10 momentum forex
+@app.route('/scan-forex-market')
+def scan_forex_market():
+    try:
+        top_10_forex = get_top_10_momentum_forex()
+        print("Top 10 Momentum Stocks:", top_10_forex)
+        return jsonify(top_10_forex)
     except Exception as e:
         return jsonify({'error': str(e)})
 
