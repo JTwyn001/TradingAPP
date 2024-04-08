@@ -45,6 +45,7 @@
                     <span id="forexprogressPercentage">0%</span>
                 </div>
             </div>
+            <div id="scan-forexMarketMessage" style="display: none; color: green; font-weight: bold;">Successfully filtered highest momentum forex pairs to dropdown</div>
 
 
             <div class="checkbox-container d-flex">
@@ -72,36 +73,49 @@
 
             <div class="dropdown w-100 my-2">
                 <!-- Modified button with an ID -->
-                <button class="btn btn-secondary glow-on-hover scan-market-button w-100" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+                <button class="btn btn-secondary glow-on-hover scan-market-button w-100" type="button" id="dropdownMenuStockButton"
+                        data-bs-toggle="dropdown" aria-expanded="false">
                     Choose Stock Instrument
                     <i class="bi bi-caret-down-fill"></i>
                 </button>
                 <!-- Placeholder for displaying the rankings -->
-                <ul class="dropdown-menu w-100" aria-labelledby="dropdownMenuButton1">
+                <ul class="dropdown-menu w-100" aria-labelledby="dropdownMenuStockButton">
                     <!-- Dropdown title -->
                     <li><span class="dropdown-item disabled">Top 10 Scanned Instruments</span></li>
                     <!-- Added onClick event to each dropdown item -->
                     {% for stock in top_10_stocks %}
-                        <li><a class="dropdown-item" href="#" data-symbol="{{ stock }}">{{ stock }}</a></li>
+                        <li><a class="dropdown-item dropdown-item-stock" href="#" data-symbol="{{ stock }}">{{ stock }}</a></li>
                     {% endfor %}
                 </ul>
             </div>
 
             <div class="dropdown w-100 my-2">
                 <!-- Modified button with an ID -->
-                <button class="btn btn-secondary glow-on-hover scan-market-button w-100" type="button" id="dropdownMenuButton2" data-bs-toggle="dropdown" aria-expanded="false">
+                <button class="btn btn-secondary glow-on-hover scan-market-button w-100" type="button" id="dropdownMenuForexButton"
+                        data-bs-toggle="dropdown" aria-expanded="false">
                     Choose Instrument
                     <i class="bi bi-caret-down-fill"></i>
                 </button>
                 <!-- Placeholder for displaying the rankings -->
-                <ul class="dropdown-menu w-100" aria-labelledby="dropdownMenuButton2">
+                <ul class="dropdown-menu w-100" aria-labelledby="dropdownMenuForexButton">
                     <!-- Dropdown title -->
-                    <li><span class="dropdown-item disabled">Top 10 Scanned Forex Instruments</span></li>
+                    <li><span class="dropdownitem dropdown-item-forex disabled">Top 10 Scanned Forex Instruments</span></li>
                     <!-- Added onClick event to each dropdown item -->
-                    {% for stock in top_10_forex %}
-                    <li><a class="dropdown-item" href="#" data-symbol="{{ stock }}">{{ stock }}</a></li>
+                    {% for ticker in top_10_forex %}
+                    <li><a class="dropdown-item dropdown-item-forex" href="#" data-symbol="{{ ticker }}">{{ ticker }}</a></li>
                     {% endfor %}
                 </ul>
+            </div>
+            <div class="lstm-prediction-section">
+                <h5>LSTM Predictions and Rankings</h5>
+                <ul id="lstmPredictionsList">
+                    {% for stock in lstm_stocks %}
+                    <li id="{{ stock }}-prediction">
+                        {{ stock }}: <span class="prediction-value">Prediction</span> - Rank: <span class="prediction-rank">Rank</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                <button id="ExecuteLSTMBtn" class="btn button btn-success">Execute LSTM</button>
             </div>
 
             <div class="my-2">

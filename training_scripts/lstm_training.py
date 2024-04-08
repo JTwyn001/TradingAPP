@@ -2,7 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 import datetime
-import yfinance as yf
+import MetaTrader5 as mt
 import pandas_ta as ta
 from sklearn.preprocessing import MinMaxScaler
 import joblib
@@ -11,36 +11,38 @@ from keras.layers import LSTM, Dense, Dropout
 import matplotlib.pyplot as plt
 
 
-def download_and_preprocess_data(start_date):
-    # Current date
-    current_date = datetime.datetime.now()
-    # Check if today is a weekend day (Saturday=5, Sunday=6)
-    if current_date.weekday() >= 5:  # if it's the weekend
-        # Roll back to the previous Friday
-        end_date = (current_date - datetime.timedelta(days=current_date.weekday() - 4)).strftime('%Y-%m-%d')
-    else:
-        # Subtract one day from the current date (if it's not a weekend)
-        end_date = (current_date - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
-
-    # Download data up to the current date
-    data = yf.download(tickers='SPY', start='2012-02-10', end='2024-03-1')
-
-    print(data.head())  # Add this line to print the first few rows of the DataFrame
+def download_and_preprocess_data(symbol, start_date, end_date):
+    # Initialize MT connection
+    if not mt.initialize():
+        print("initialize() failed, error code =", mt.last_error())
+        quit()
+    # Set the symbol and timeframe
+    timeframe = mt.TIMEFRAME_D1  # Daily timeframe
+    # Fetch historical data
+    rates = mt.copy_rates_range(symbol, timeframe, start_date, end_date)
+    # Check if data was fetched successfully
+    if rates is None or len(rates) == 0:
+        print(f"No data for {symbol}")
+        return None, None
+    # Convert to DataFrame
+    data = pd.DataFrame(rates)
+    data['time'] = pd.to_datetime(data['time'], unit='s')
+    data.set_index('time', inplace=True)
 
     # Add indicators
-    data['RSI'] = ta.rsi(data['Close'], length=15)
-    data['EMAF'] = ta.ema(data['Close'], length=20)
-    data['EMAM'] = ta.ema(data['Close'], length=100)
-    data['EMAS'] = ta.ema(data['Close'], length=150)
+    data['RSI'] = ta.rsi(data['close'], length=15)
+    data['EMAF'] = ta.ema(data['close'], length=20)
+    data['EMAM'] = ta.ema(data['close'], length=100)
+    data['EMAS'] = ta.ema(data['close'], length=150)
 
     # Target variable
-    data['TargetNextClose'] = data['Adj Close'].shift(-1)
+    data['TargetNextClose'] = data['close'].shift(-1)
     data.dropna(inplace=True)
     data.reset_index(drop=True, inplace=True)
 
     # Select features and target
-    features = data[['Adj Close', 'RSI', 'EMAF', 'EMAM', 'EMAS']].values
-    target = data['TargetNextClose']
+    features = data[['close', 'RSI', 'EMAF', 'EMAM', 'EMAS']].values
+    target = data['TargetNextClose'].values
 
     return features, target
 
@@ -53,11 +55,11 @@ def scale_data(features, target):
     # Fit and transform features
     features_scaled = feature_scaler.fit_transform(features)
 
-    # Convert target to numpy array and reshape
-    target_array = target.values.reshape(-1, 1)  # Convert to numpy array and reshape
+    # Ensure target is a 2D array. It's already a NumPy array, so just reshape it.
+    target_reshaped = target.reshape(-1, 1)  # This line ensures target is in the correct shape
 
     # Fit and transform target
-    target_scaled = target_scaler.fit_transform(target_array)
+    target_scaled = target_scaler.fit_transform(target_reshaped)
 
     # Return the scaler objects along with the scaled data
     return features_scaled, target_scaled, feature_scaler, target_scaler
@@ -120,7 +122,8 @@ def main():
         print("Data retrieval was unsuccessful. Exiting the script.")
         return  # Exit the script as we cannot proceed without data
 
-    features_scaled, target_scaled, feature_scaler, target_scaler = scale_data(features, target)
+    # Adjusting the handling of the target variable since it's already a NumPy array
+    features_scaled, target_scaled, feature_scaler, target_scaler = scale_data(features, target.reshape(-1, 1))  # target is already a NumPy array, just reshaping for consistency
     X, y = create_sequences(features_scaled, target_scaled)
 
     # Splitting data into training and test sets

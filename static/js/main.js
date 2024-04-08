@@ -1,9 +1,9 @@
 // JavaScript function to update button text and chart
 function updateChartAndButtonText(text, symbol) {
     var suffixesToRemove = ['.NYSE', '.NAS', '.LSE', '.ASE', '.TSX', '.ETR']; // Add more as needed
-    var button = document.getElementById('dropdownMenuButton1');
+    var button = document.getElementById('dropdownMenuStockButton');
     button.innerHTML = text + ' <i class="bi bi-caret-down-fill"></i>';
-    var button2 = document.getElementById('dropdownMenuButton2');
+    var button2 = document.getElementById('dropdownMenuForexButton');
     button2.innerHTML = text + ' <i class="bi bi-caret-down-fill"></i>';
 
     // Remove suffixes from symbol
@@ -61,7 +61,25 @@ function getPredictions(ticker) {
 
 $(document).ready(function() {
     // Handle dropdown item click
-    $(document).on('click', '.dropdown-item', function() {
+    $(document).on('click', '.dropdown-item .dropdown-item-stock', function() {
+        var symbol = $(this).data('symbol');
+        var text = $(this).text();
+        updateChartAndButtonText(text, symbol);
+    });
+
+    $(document).on('click', '.dropdown-item-forex', function() {
+        var symbol = $(this).data('symbol');
+        var text = $(this).text();
+        updateChartAndButtonText(text, symbol);
+    });
+
+    // Initialize with a default symbol, if needed
+    updateChartAndButtonText("Choose Stock Instrument", "BTCUSD");
+});
+
+$(document).ready(function() {
+    // Handle dropdown item click
+    $(document).on('click', '.dropdown-item-forex', function() {
         var symbol = $(this).data('symbol');
         var text = $(this).text();
         updateChartAndButtonText(text, symbol);
@@ -69,6 +87,24 @@ $(document).ready(function() {
 
     // Initialize with a default symbol, if needed
     updateChartAndButtonText("Choose Forex Instrument", "BTCUSD");
+});
+
+$('#ExecuteLSTMBtn').click(function() {
+    // Send a request to the backend to execute LSTM predictions
+    $.ajax({
+        url: '/execute_lstm_predictions',
+        type: 'GET', // or 'POST' if you need to send data
+        success: function(response) {
+            // Update the prediction and rank spans with the response data
+            for (let [ticker, data] of Object.entries(response)) {
+                $(`#${ticker}-prediction .prediction-value`).text(data.prediction);
+                $(`#${ticker}-prediction .prediction-rank`).text(data.rank);
+            }
+        },
+        error: function(error) {
+            console.log('Error executing LSTM predictions:', error);
+        }
+    });
 });
 
 $('#GetPredictionsBtn').click(function() {
@@ -179,6 +215,15 @@ function getSelectedStocks() {
     return selectedStocks;
 }
 
+function getSelectedForex() {
+    let selectedForex = [];
+    // Iterate over each dropdown item and extract the symbol
+    $('.dropdown-menu .dropdown-item-forex').each(function() {
+        selectedForex.push($(this).data('symbol'));
+    });
+    return selectedForex;
+}
+
 
 // Function to handle Trade Stock button click
 function handleTradeStockClick() {
@@ -267,6 +312,17 @@ $(document).ready(function() {
         });
     });
 
+    document.addEventListener('DOMContentLoaded', function() {
+        // Attach event listeners to newly added dropdown items
+        document.querySelectorAll('.dropdown-item-forex').forEach(item => {
+            item.addEventListener('click', function() {
+                const symbol = this.getAttribute('data-symbol');
+                const text = this.text;
+                updateChartAndButtonText(text, symbol);
+            });
+        });
+    });
+
     // Attach click event listeners to dropdown items
     $(document).on('click', '.dropdown-item', function() {
         var text = $(this).text(); // Get the text of the clicked item
@@ -275,6 +331,12 @@ $(document).ready(function() {
         updateChartAndButtonText(text, symbol);
     });
 
+    $(document).on('click', '.dropdown-item-forex', function() {
+        var text = $(this).text(); // Get the text of the clicked item
+        var symbol = $(this).attr('data-symbol'); // Get the symbol from the data-symbol attribute
+
+        updateChartAndButtonText(text, symbol);
+    });
 
     // Handling User Input Submission
     document.getElementById('submitQuery').addEventListener('click', function() {
@@ -334,7 +396,7 @@ $(document).ready(function() {
         fetch('/scan-market')
             .then(response => response.json())
             .then(data => {
-                const dropdownMenu = document.getElementById('dropdownMenuButton1').nextElementSibling;
+                const dropdownMenu = document.getElementById('dropdownMenuStockButton').nextElementSibling;
                 // Clear existing dropdown items
                 dropdownMenu.innerHTML = '';
                 // Add new dropdown items
@@ -384,8 +446,11 @@ $(document).ready(function() {
             .then(response => response.json())
             .then(data => {
 
-                const dropdownMenu = document.getElementById('dropdownMenuButton2').nextElementSibling;
-                dropdownMenu.innerHTML = '';
+                const forexDropdownMenu = document.getElementById('dropdownMenuForexButton').nextElementSibling;
+                // dropdownMenu.innerHTML = '';
+                while (forexDropdownMenu.children.length > 1) {
+                    forexDropdownMenu.removeChild(forexDropdownMenu.lastChild);
+                }
                 data.forEach(forex => {
                     const dropdownItem = document.createElement('a');
                     dropdownItem.classList.add('dropdown-item');
@@ -395,9 +460,14 @@ $(document).ready(function() {
                     dropdownItem.addEventListener('click', function() {
                         updateChartAndButtonText(this.textContent, this.getAttribute('data-symbol'));
                     });
-                    dropdownMenu.appendChild(dropdownItem);
+                    // dropdownMenu.appendChild(dropdownItem);
+                    const li = document.createElement('li');
+                    li.appendChild(dropdownItem);
+                    forexDropdownMenu.appendChild(li);
                 });
                 forexloadingBar.style.display = 'none';
+                // Make the success message visible
+                document.getElementById('scan-forexMarketMessage').style.display = 'block';
             }).catch(error => {
             console.error('Error fetching forex market data:', error);
             forexloadingBar.style.display = 'none';

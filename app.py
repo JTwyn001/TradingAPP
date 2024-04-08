@@ -66,7 +66,7 @@ def trading_ai():
     return render_template('trading_ai.html', top_10_stocks=top_10_stocks)
 
 
-@app.route('/trading-ai-forex')
+@app.route('/trading-ai')
 def trading_ai_forex():
     sp500_forex = pd.read_csv('mt5_forex_tickers.csv')
     top_10_forex = sp500_forex['Ticker'].head(10).tolist()  # Assuming the column name is 'Ticker'
@@ -127,28 +127,6 @@ def scan_forex_market():
     except Exception as e:
         return jsonify({'error': str(e)})
 
-
-# Function to load the latest model and scaler
-def load_latest_model_and_scaler(model_dir='./models', scaler_dir='./scalers'):
-    model_files = [os.path.join(model_dir, f) for f in os.listdir(model_dir) if f.endswith('.h5')]
-    feature_scaler_files = [os.path.join(scaler_dir, f) for f in os.listdir(scaler_dir) if
-                            'feature_scaler' in f and f.endswith('.pkl')]
-    target_scaler_files = [os.path.join(scaler_dir, f) for f in os.listdir(scaler_dir) if
-                           'target_scaler' in f and f.endswith('.pkl')]
-
-    # Ensure there are files before using max to avoid ValueError
-    latest_model_file = max(model_files, key=os.path.getctime) if model_files else None
-    latest_feature_scaler_file = max(feature_scaler_files, key=os.path.getctime) if feature_scaler_files else None
-    latest_target_scaler_file = max(target_scaler_files, key=os.path.getctime) if target_scaler_files else None
-
-    # Load the latest files if they exist
-    model = load_model(latest_model_file) if latest_model_file else None
-    feature_scaler = joblib.load(latest_feature_scaler_file) if latest_feature_scaler_file else None
-    target_scaler = joblib.load(latest_target_scaler_file) if latest_target_scaler_file else None
-
-    return model, feature_scaler, target_scaler
-
-
 # Function to fetch recent data
 def fetch_recent_data(ticker, window_size=30):
     if not mt.initialize():
@@ -190,6 +168,46 @@ def fetch_recent_data(ticker, window_size=30):
     except Exception as e:
         print(f"Error fetching data for {ticker}: {e}")
         return None
+
+
+@app.route('/execute_lstm_predictions', methods=['GET'])
+def execute_lstm_predictions():
+    predictions = {}
+    for ticker in ['DAY.NYSE', 'PSON.LSE', 'OCDO.LSE', 'NXT.LSE', 'LSE.LSE']:
+        model, feature_scaler, target_scaler = load_model_and_scalers_for_ticker(ticker)
+        prepared_data = preprocess_data_for_lstm(ticker, feature_scaler)
+        if prepared_data is not None:
+            predicted_change_scaled = model.predict(prepared_data)
+            predicted_change = target_scaler.inverse_transform(predicted_change_scaled.reshape(-1, 1))[0][0]
+            predictions[ticker] = predicted_change
+        else:
+            predictions[ticker] = None  # or handle this case differently
+
+    # Rank the predictions
+    ranked_predictions = {ticker: {'prediction': pred, 'rank': rank + 1} for rank, (ticker, pred) in enumerate(sorted(predictions.items(), key=lambda item: item[1], reverse=True)) if pred is not None}
+
+    return jsonify(ranked_predictions)
+
+
+# Function to load the latest model and scaler
+def load_latest_model_and_scaler(model_dir='./models', scaler_dir='./scalers'):
+    model_files = [os.path.join(model_dir, f) for f in os.listdir(model_dir) if f.endswith('.h5')]
+    feature_scaler_files = [os.path.join(scaler_dir, f) for f in os.listdir(scaler_dir) if
+                            'feature_scaler' in f and f.endswith('.pkl')]
+    target_scaler_files = [os.path.join(scaler_dir, f) for f in os.listdir(scaler_dir) if
+                           'target_scaler' in f and f.endswith('.pkl')]
+
+    # Ensure there are files before using max to avoid ValueError
+    latest_model_file = max(model_files, key=os.path.getctime) if model_files else None
+    latest_feature_scaler_file = max(feature_scaler_files, key=os.path.getctime) if feature_scaler_files else None
+    latest_target_scaler_file = max(target_scaler_files, key=os.path.getctime) if target_scaler_files else None
+
+    # Load the latest files if they exist
+    model = load_model(latest_model_file) if latest_model_file else None
+    feature_scaler = joblib.load(latest_feature_scaler_file) if latest_feature_scaler_file else None
+    target_scaler = joblib.load(latest_target_scaler_file) if latest_target_scaler_file else None
+
+    return model, feature_scaler, target_scaler
 
 
 def preprocess_data_for_lstm(ticker, feature_scaler):
@@ -258,48 +276,42 @@ def get_predictions():
     global prediction_values
     # Extract the selected stocks from the request
     selected_stocks = request.json['selectedStocks']
-
     # Load the latest model and scaler dynamically
     model, feature_scaler, target_scaler = load_latest_model_and_scaler()  # Assuming you have separate scalers for
     # features and target
 
-    stock_predictions = {}
+    predictions = []
     for ticker in selected_stocks:
         try:
-            recent_data = fetch_recent_data(ticker, window_size=30)
-            if recent_data is None:
-                print(f"No recent data available for {ticker}.")
-                stock_predictions[ticker] = 'No recent data available'
-                continue
-
             prepared_data = preprocess_data_for_lstm(ticker, feature_scaler)  # Pass feature_scaler here
             if prepared_data is None:
                 print(f"Prepared data for {ticker} is None.")
-                stock_predictions[ticker] = 'Error preparing data'
                 continue
 
             # Get predictions from the model
             predicted_change_scaled = model.predict(prepared_data)
             predicted_change = target_scaler.inverse_transform(predicted_change_scaled.reshape(-1, 1))[0][0]
 
-            print(f"Received raw prediction values: {prediction_values}")
+            # Store the ticker and its prediction
+            predictions.append((ticker, predicted_change))
 
-            # Store the raw prediction value
-            prediction_values[ticker] = float(predicted_change)
 
-            # Print the value that determines the recommendation
-            # After storing all predictions
-            for ticker, value in prediction_values.items():
-                print(f"{ticker}: {value} (Type: {type(value)})")
 
-            recommendation = 'BUY' if predicted_change > 200 else 'SELL'
-            stock_predictions[ticker] = recommendation
+            # Sort the predictions based on the predicted change value
+            sorted_predictions = sorted(predictions, key=lambda x: x[1], reverse=True)
+
+            # Convert to a dictionary for JSON response
+            sorted_predictions = {ticker: rank for rank, (ticker, _) in enumerate(sorted_predictions, start=1)}
             print(f"Predicted change for {ticker}: {predicted_change}")
         except Exception as e:
             print(f"Exception processing {ticker}: {e}")
-            stock_predictions[ticker] = f'Error: {str(e)}'
 
-    return jsonify(stock_predictions)
+    # Sort the predictions based on the predicted change value
+    sorted_predictions = sorted(predictions, key=lambda x: x[1], reverse=True)
+    ranked_predictions = {ticker: rank for rank, (ticker, _) in enumerate(sorted_predictions, start=1)}
+
+
+    return jsonify(sorted_predictions)
 
 
 @app.route('/get_trade_predictions', methods=['POST'])
