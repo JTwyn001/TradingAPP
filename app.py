@@ -122,7 +122,7 @@ def scan_market():
 def scan_forex_market():
     try:
         top_10_forex = get_top_10_momentum_forex()
-        print("Top 10 Momentum Stocks:", top_10_forex)
+        print("Top 10 Momentum Forex:", top_10_forex)
         return jsonify(top_10_forex)
     except Exception as e:
         return jsonify({'error': str(e)})

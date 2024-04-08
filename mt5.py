@@ -317,7 +317,7 @@ def get_top_10_momentum_forex():
         quit()
 
     forex_tickers = pd.read_csv('mt5_forex_tickers.csv')
-    tickers = forex_tickers['Ticker'].tolist()[:200]
+    tickers = forex_tickers['Ticker'].tolist()[:40]
 
     end_date = pd.Timestamp.now()
     periods = {
@@ -327,7 +327,9 @@ def get_top_10_momentum_forex():
         'One-Month': end_date - BDay(21),
     }
 
-    hqm_dataframe = pd.DataFrame(index=tickers, columns=['One-Year Return Percentile', 'Six-Month Return Percentile', 'Three-Month Return Percentile', 'One-Month Return Percentile', 'HQM Score'])
+    hqm_dataframe = pd.DataFrame(index=tickers, columns=['One-Year Return Percentile', 'Six-Month Return Percentile',
+                                                         'Three-Month Return Percentile', 'One-Month Return Percentile',
+                                                         'HQM Score'])
 
     for ticker in tickers:
         print(f"Fetching data for {ticker}...")
@@ -341,7 +343,8 @@ def get_top_10_momentum_forex():
         if price_data:
             temp_df = pd.DataFrame([price_data], columns=periods.keys())
             for period_name in periods.keys():
-                hqm_dataframe.loc[ticker, period_name + ' Return Percentile'] = stats.percentileofscore(temp_df[period_name], temp_df.at[0, period_name])
+                hqm_dataframe.loc[ticker, period_name + ' Return Percentile'] = stats.percentileofscore(
+                    temp_df[period_name], temp_df.at[0, period_name])
 
     hqm_dataframe['HQM Score'] = hqm_dataframe.mean(axis=1)
     hqm_dataframe.reset_index(inplace=True)
@@ -350,6 +353,7 @@ def get_top_10_momentum_forex():
     top_10_hqm_forex = hqm_dataframe.sort_values(by='HQM Score', ascending=False).head(10)['Ticker'].tolist()
 
     return top_10_hqm_forex
+
 
 if __name__ == '__main__':
     # strategy params
