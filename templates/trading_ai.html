@@ -106,16 +106,27 @@
                     {% endfor %}
                 </ul>
             </div>
-            <div class="lstm-prediction-section">
-                <h5>LSTM Predictions and Rankings</h5>
-                <ul id="lstmPredictionsList">
-                    {% for stock in lstm_stocks %}
-                    <li id="{{ stock }}-prediction">
-                        {{ stock }}: <span class="prediction-value">Prediction</span> - Rank: <span class="prediction-rank">Rank</span>
-                    </li>
-                    {% endfor %}
-                </ul>
-                <button id="ExecuteLSTMBtn" class="btn button btn-success">Execute LSTM</button>
+
+            <div class="lstm-prediction-section col-md-12 my-4">
+
+                <div class="row d-flex justify-content-center">
+                    <h5 class="text-light text-center">LSTM Predictions and Rankings</h5>
+
+                    <p class="details">NVDA: <span id="stock1lstm" class="balance-equity">0.00</span></p>
+                    <p class="details">AAPL: <span id="stock2lstm" class="balance-equity">0.00</span></p>
+                    <p class="details">A: <span id="stock3lstm"></span></p>
+                    <ul id="lstmPredictionsList">
+                        {% for stock in lstm_stocks %}
+                        <li id="{{ stock }}-prediction">
+                            {{ stock }}: <span class="prediction-value">Prediction</span> - Rank: <span class="prediction-rank">Rank</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    <div class="btn-container text-center">
+                        <button id="ExecuteLSTMBtn" class="btn button btn-success">Execute LSTM</button>
+                    </div>
+
+                </div>
             </div>
 
             <div class="my-2">

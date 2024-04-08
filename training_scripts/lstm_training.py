@@ -15,7 +15,7 @@ def download_and_preprocess_data(symbol, start_date, end_date):
     # Initialize MT connection
     if not mt.initialize():
         print("initialize() failed, error code =", mt.last_error())
-        quit()
+        
     # Set the symbol and timeframe
     timeframe = mt.TIMEFRAME_D1  # Daily timeframe
     # Fetch historical data
@@ -101,6 +101,9 @@ def plot_prediction(y_test, y_pred):
 
 
 def main():
+    symbol = 'DAY.NYSE'
+    start_date = '2012-01-01'  # Assuming you want to start from this date
+    end_date = datetime.datetime.now().strftime('%Y-%m-%d')  # Today's date in 'YYYY-MM-DD' format
     # Path to a file where the last training timestamp is saved
     timestamp_file = './last_training_timestamp.txt'
 
@@ -114,40 +117,30 @@ def main():
         except ValueError:
             print("Invalid date in timestamp file. Using default start date.")
 
+    print(f"Training model for {symbol}...")
     # Proceed with data downloading and preprocessing using the determined start date
-    features, target = download_and_preprocess_data(start_date)
+    features, target = download_and_preprocess_data(symbol, start_date, end_date)
 
     # Check if features and target were successfully retrieved
     if features is None or target is None:
-        print("Data retrieval was unsuccessful. Exiting the script.")
-        return  # Exit the script as we cannot proceed without data
+        print("Data retrieval was unsuccessful.")
+        return
 
-    # Adjusting the handling of the target variable since it's already a NumPy array
-    features_scaled, target_scaled, feature_scaler, target_scaler = scale_data(features, target.reshape(-1, 1))  # target is already a NumPy array, just reshaping for consistency
+    features_scaled, target_scaled, feature_scaler, target_scaler = scale_data(features, target)
     X, y = create_sequences(features_scaled, target_scaled)
-
-    # Splitting data into training and test sets
-    split = int(len(X) * 0.8)
-    X_train, X_test, y_train, y_test = X[:split], X[split:], y[:split], y[split:]
+    X_train, X_test, y_train, y_test = X[:int(len(X) * 0.8)], X[int(len(X) * 0.8):], y[:int(len(y) * 0.8)], y[int(len(y) * 0.8):]
 
     model = build_and_train_model(X_train, y_train)
     y_pred = model.predict(X_test)
-
-    # Plotting the results
     plot_prediction(y_test, y_pred)
 
-    # Generate a timestamp for the filename
     timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+    model_filename = f'./models/lstm_model_{symbol}_{timestamp}.h5'
+    feature_scaler_filename = f'./scalers/feature_scaler_{symbol}_{timestamp}.pkl'
+    target_scaler_filename = f'./scalers/target_scaler_{symbol}_{timestamp}.pkl'
 
-    # Save the model with the timestamp in the filename
-    model_filename = f'./models/lstm_model_{timestamp}.h5'
     model.save(model_filename)
-
-    # Save the scaler with the timestamp in the filename
-    feature_scaler_filename = f'./scalers/feature_scaler_{timestamp}.pkl'
     joblib.dump(feature_scaler, feature_scaler_filename)
-
-    target_scaler_filename = f'./scalers/target_scaler_{timestamp}.pkl'
     joblib.dump(target_scaler, target_scaler_filename)
 
     # After training, update the timestamp file with the current date
