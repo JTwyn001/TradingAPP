@@ -178,8 +178,8 @@ def execute_lstm_predictions():
     # Load model and scalers
     model, feature_scaler, target_scaler = load_latest_model_and_scaler_for_ticker(ticker_symbol)
 
-    # Preprocess data for EURGBP
-    prepared_data = preprocess_data_for_lstm_yf(ticker_symbol, feature_scaler)
+    # Preprocess data for EURGBP using MT5
+    prepared_data = preprocess_data_for_lstm_mt(ticker_symbol, feature_scaler)
 
     if prepared_data is not None:
         # Get prediction
@@ -191,37 +191,46 @@ def execute_lstm_predictions():
     else:
         return jsonify({"error": "Data preparation failed"})
 
-def preprocess_data_for_lstm_yf(ticker_symbol, feature_scaler):
-    # Fetch data from Yahoo Finance
-    end_date = datetime.datetime.now()
-    start_date = end_date - datetime.timedelta(days=365)  # Adjust based on your requirement
 
-    data = yf.download(tickers=ticker_symbol, start=start_date.strftime('%Y-%m-%d'), end=end_date.strftime('%Y-%m-%d'))
-
-    if data.empty:
-        print(f"No data fetched for {ticker_symbol}")
+def preprocess_data_for_lstm_mt(ticker, feature_scaler):
+    if not mt.initialize():
+        print("MT5 initialize() failed, error code =", mt.last_error())
         return None
 
-    # Add indicators
-    data['RSI'] = ta.rsi(data['Close'], length=15)
-    data['EMAF'] = ta.ema(data['Close'], length=20)
-    data['EMAM'] = ta.ema(data['Close'], length=100)
-    data['EMAS'] = ta.ema(data['Close'], length=150)
+    end_date = datetime.datetime.now()
+    start_date = end_date - datetime.timedelta(days=365)  # Example: last 365 days
+
+    utc_from = int(start_date.timestamp())
+    utc_to = int(end_date.timestamp())
+
+    rates = mt.copy_rates_range(ticker, mt.TIMEFRAME_D1, utc_from, utc_to)
+
+    if rates is None or len(rates) == 0:
+        print(f"No recent data fetched for {ticker}")
+        return None
+
+    data = pd.DataFrame(rates)
+    data['time'] = pd.to_datetime(data['time'], unit='s')
+    data.set_index('time', inplace=True)
+
+    # Same indicators as used during training
+    data['RSI'] = ta.rsi(data['close'], length=15)
+    data['EMAF'] = ta.ema(data['close'], length=20)
+    data['EMAM'] = ta.ema(data['close'], length=100)
+    data['EMAS'] = ta.ema(data['close'], length=150)
     data.dropna(inplace=True)
 
-    # Select features
-    features = data[['Close', 'RSI', 'EMAF', 'EMAM', 'EMAS']].values[-30:]  # Get the last 30 days
+    features = data[['close', 'RSI', 'EMAF', 'EMAM', 'EMAS']].values[-30:]  # Last 30 days
 
-    # Scale features
     features_scaled = feature_scaler.transform(features)
-
-    # Reshape for LSTM input
     features_reshaped = features_scaled.reshape(1, features_scaled.shape[0], features_scaled.shape[1])
 
     return features_reshaped
 
+
 def load_latest_model_and_scaler_for_ticker(ticker_symbol, model_dir='./models', scaler_dir='./scalers'):
-    model_files = [os.path.join(model_dir, f) for f in os.listdir(model_dir) if f.endswith('.h5') and ticker_symbol in f]
+    model_files = [os.path.join(model_dir, f) for f in os.listdir(model_dir) if
+                   f.endswith('.h5') and ticker_symbol in f]
     feature_scaler_files = [os.path.join(scaler_dir, f) for f in os.listdir(scaler_dir) if
                             'feature_scaler' in f and f.endswith('.pkl') and ticker_symbol in f]
     target_scaler_files = [os.path.join(scaler_dir, f) for f in os.listdir(scaler_dir) if
