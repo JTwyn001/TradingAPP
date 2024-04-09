@@ -127,6 +127,7 @@ def scan_forex_market():
     except Exception as e:
         return jsonify({'error': str(e)})
 
+
 # Function to fetch recent data
 def fetch_recent_data(ticker, window_size=30):
     if not mt.initialize():
@@ -172,21 +173,71 @@ def fetch_recent_data(ticker, window_size=30):
 
 @app.route('/execute_lstm_predictions', methods=['GET'])
 def execute_lstm_predictions():
-    predictions = {}
-    for ticker in ['DAY.NYSE', 'PSON.LSE', 'OCDO.LSE', 'NXT.LSE', 'LSE.LSE']:
-        model, feature_scaler, target_scaler = load_model_and_scalers_for_ticker(ticker)
-        prepared_data = preprocess_data_for_lstm(ticker, feature_scaler)
-        if prepared_data is not None:
-            predicted_change_scaled = model.predict(prepared_data)
-            predicted_change = target_scaler.inverse_transform(predicted_change_scaled.reshape(-1, 1))[0][0]
-            predictions[ticker] = predicted_change
-        else:
-            predictions[ticker] = None  # or handle this case differently
+    ticker_symbol = 'EURGBP'
 
-    # Rank the predictions
-    ranked_predictions = {ticker: {'prediction': pred, 'rank': rank + 1} for rank, (ticker, pred) in enumerate(sorted(predictions.items(), key=lambda item: item[1], reverse=True)) if pred is not None}
+    # Load model and scalers
+    model, feature_scaler, target_scaler = load_latest_model_and_scaler_for_ticker(ticker_symbol)
 
-    return jsonify(ranked_predictions)
+    # Preprocess data for EURGBP
+    prepared_data = preprocess_data_for_lstm_yf(ticker_symbol, feature_scaler)
+
+    if prepared_data is not None:
+        # Get prediction
+        predicted_change_scaled = model.predict(prepared_data)
+        predicted_change = target_scaler.inverse_transform(predicted_change_scaled.reshape(-1, 1))[0][0]
+
+        # Return the prediction for EURGBP
+        return jsonify({"EURGBP": predicted_change})
+    else:
+        return jsonify({"error": "Data preparation failed"})
+
+def preprocess_data_for_lstm_yf(ticker_symbol, feature_scaler):
+    # Fetch data from Yahoo Finance
+    end_date = datetime.datetime.now()
+    start_date = end_date - datetime.timedelta(days=365)  # Adjust based on your requirement
+
+    data = yf.download(tickers=ticker_symbol, start=start_date.strftime('%Y-%m-%d'), end=end_date.strftime('%Y-%m-%d'))
+
+    if data.empty:
+        print(f"No data fetched for {ticker_symbol}")
+        return None
+
+    # Add indicators
+    data['RSI'] = ta.rsi(data['Close'], length=15)
+    data['EMAF'] = ta.ema(data['Close'], length=20)
+    data['EMAM'] = ta.ema(data['Close'], length=100)
+    data['EMAS'] = ta.ema(data['Close'], length=150)
+    data.dropna(inplace=True)
+
+    # Select features
+    features = data[['Close', 'RSI', 'EMAF', 'EMAM', 'EMAS']].values[-30:]  # Get the last 30 days
+
+    # Scale features
+    features_scaled = feature_scaler.transform(features)
+
+    # Reshape for LSTM input
+    features_reshaped = features_scaled.reshape(1, features_scaled.shape[0], features_scaled.shape[1])
+
+    return features_reshaped
+
+def load_latest_model_and_scaler_for_ticker(ticker_symbol, model_dir='./models', scaler_dir='./scalers'):
+    model_files = [os.path.join(model_dir, f) for f in os.listdir(model_dir) if f.endswith('.h5') and ticker_symbol in f]
+    feature_scaler_files = [os.path.join(scaler_dir, f) for f in os.listdir(scaler_dir) if
+                            'feature_scaler' in f and f.endswith('.pkl') and ticker_symbol in f]
+    target_scaler_files = [os.path.join(scaler_dir, f) for f in os.listdir(scaler_dir) if
+                           'target_scaler' in f and f.endswith('.pkl') and ticker_symbol in f]
+
+    # Ensure there are files before using max to avoid ValueError
+    latest_model_file = max(model_files, key=os.path.getctime) if model_files else None
+    latest_feature_scaler_file = max(feature_scaler_files, key=os.path.getctime) if feature_scaler_files else None
+    latest_target_scaler_file = max(target_scaler_files, key=os.path.getctime) if target_scaler_files else None
+
+    # Load the latest files if they exist
+    model = load_model(latest_model_file) if latest_model_file else None
+    feature_scaler = joblib.load(latest_feature_scaler_file) if latest_feature_scaler_file else None
+    target_scaler = joblib.load(latest_target_scaler_file) if latest_target_scaler_file else None
+
+    return model, feature_scaler, target_scaler
 
 
 # Function to load the latest model and scaler
@@ -295,8 +346,6 @@ def get_predictions():
             # Store the ticker and its prediction
             predictions.append((ticker, predicted_change))
 
-
-
             # Sort the predictions based on the predicted change value
             sorted_predictions = sorted(predictions, key=lambda x: x[1], reverse=True)
 
@@ -309,7 +358,6 @@ def get_predictions():
     # Sort the predictions based on the predicted change value
     sorted_predictions = sorted(predictions, key=lambda x: x[1], reverse=True)
     ranked_predictions = {ticker: rank for rank, (ticker, _) in enumerate(sorted_predictions, start=1)}
-
 
     return jsonify(sorted_predictions)
 

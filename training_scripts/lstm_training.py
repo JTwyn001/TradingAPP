@@ -2,7 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 import datetime
-import MetaTrader5 as mt
+import yfinance as yf
 import pandas_ta as ta
 from sklearn.preprocessing import MinMaxScaler
 import joblib
@@ -11,38 +11,36 @@ from keras.layers import LSTM, Dense, Dropout
 import matplotlib.pyplot as plt
 
 
-def download_and_preprocess_data(symbol, start_date, end_date):
-    # Initialize MT connection
-    if not mt.initialize():
-        print("initialize() failed, error code =", mt.last_error())
-        
-    # Set the symbol and timeframe
-    timeframe = mt.TIMEFRAME_D1  # Daily timeframe
-    # Fetch historical data
-    rates = mt.copy_rates_range(symbol, timeframe, start_date, end_date)
-    # Check if data was fetched successfully
-    if rates is None or len(rates) == 0:
-        print(f"No data for {symbol}")
-        return None, None
-    # Convert to DataFrame
-    data = pd.DataFrame(rates)
-    data['time'] = pd.to_datetime(data['time'], unit='s')
-    data.set_index('time', inplace=True)
+def download_and_preprocess_data(start_date):
+    # Current date
+    current_date = datetime.datetime.now()
+    # Check if today is a weekend day (Saturday=5, Sunday=6)
+    if current_date.weekday() >= 5:  # if it's the weekend
+        # Roll back to the previous Friday
+        end_date = (current_date - datetime.timedelta(days=current_date.weekday() - 4)).strftime('%Y-%m-%d')
+    else:
+        # Subtract one day from the current date (if it's not a weekend)
+        end_date = (current_date - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
+
+    # Download data up to the current date
+    data = yf.download(tickers='GPS', start='2012-02-10', end='2024-03-1')
+
+    print(data.head())  # Add this line to print the first few rows of the DataFrame
 
     # Add indicators
-    data['RSI'] = ta.rsi(data['close'], length=15)
-    data['EMAF'] = ta.ema(data['close'], length=20)
-    data['EMAM'] = ta.ema(data['close'], length=100)
-    data['EMAS'] = ta.ema(data['close'], length=150)
+    data['RSI'] = ta.rsi(data['Close'], length=15)
+    data['EMAF'] = ta.ema(data['Close'], length=20)
+    data['EMAM'] = ta.ema(data['Close'], length=100)
+    data['EMAS'] = ta.ema(data['Close'], length=150)
 
     # Target variable
-    data['TargetNextClose'] = data['close'].shift(-1)
+    data['TargetNextClose'] = data['Adj Close'].shift(-1)
     data.dropna(inplace=True)
     data.reset_index(drop=True, inplace=True)
 
     # Select features and target
-    features = data[['close', 'RSI', 'EMAF', 'EMAM', 'EMAS']].values
-    target = data['TargetNextClose'].values
+    features = data[['Adj Close', 'RSI', 'EMAF', 'EMAM', 'EMAS']].values
+    target = data['TargetNextClose']
 
     return features, target
 
@@ -55,11 +53,11 @@ def scale_data(features, target):
     # Fit and transform features
     features_scaled = feature_scaler.fit_transform(features)
 
-    # Ensure target is a 2D array. It's already a NumPy array, so just reshape it.
-    target_reshaped = target.reshape(-1, 1)  # This line ensures target is in the correct shape
+    # Convert target to numpy array and reshape
+    target_array = target.values.reshape(-1, 1)  # Convert to numpy array and reshape
 
     # Fit and transform target
-    target_scaled = target_scaler.fit_transform(target_reshaped)
+    target_scaled = target_scaler.fit_transform(target_array)
 
     # Return the scaler objects along with the scaled data
     return features_scaled, target_scaled, feature_scaler, target_scaler
@@ -101,9 +99,6 @@ def plot_prediction(y_test, y_pred):
 
 
 def main():
-    symbol = 'DAY.NYSE'
-    start_date = '2012-01-01'  # Assuming you want to start from this date
-    end_date = datetime.datetime.now().strftime('%Y-%m-%d')  # Today's date in 'YYYY-MM-DD' format
     # Path to a file where the last training timestamp is saved
     timestamp_file = './last_training_timestamp.txt'
 
@@ -117,28 +112,46 @@ def main():
         except ValueError:
             print("Invalid date in timestamp file. Using default start date.")
 
-    print(f"Training model for {symbol}...")
     # Proceed with data downloading and preprocessing using the determined start date
-    features, target = download_and_preprocess_data(symbol, start_date, end_date)
+    features, target = download_and_preprocess_data(start_date)
 
     # Check if features and target were successfully retrieved
     if features is None or target is None:
-        print("Data retrieval was unsuccessful.")
-        return
+        print("Data retrieval was unsuccessful. Exiting the script.")
+        return  # Exit the script as we cannot proceed without data
 
     features_scaled, target_scaled, feature_scaler, target_scaler = scale_data(features, target)
     X, y = create_sequences(features_scaled, target_scaled)
-    X_train, X_test, y_train, y_test = X[:int(len(X) * 0.8)], X[int(len(X) * 0.8):], y[:int(len(y) * 0.8)], y[int(len(y) * 0.8):]
+
+    # Splitting data into training and test sets
+    split = int(len(X) * 0.8)
+    X_train, X_test, y_train, y_test = X[:split], X[split:], y[:split], y[split:]
 
     model = build_and_train_model(X_train, y_train)
     y_pred = model.predict(X_test)
+
+    # Plotting the results
     plot_prediction(y_test, y_pred)
 
+    # Generate a timestamp for the filename
     timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
-    model_filename = f'./models/lstm_model_{symbol}_{timestamp}.h5'
-    feature_scaler_filename = f'./scalers/feature_scaler_{symbol}_{timestamp}.pkl'
-    target_scaler_filename = f'./scalers/target_scaler_{symbol}_{timestamp}.pkl'
 
+    ticker_symbol = 'EURGBP'
+    # Include the ticker symbol and timestamp in the filenames for clarity
+    # Create directories if they don't exist
+    # Ensure directories for models and scalers exist
+    models_dir = 'C:/Users/tohye/Documents/Capstone/TradingAPP/models'
+    scalers_dir = 'C:/Users/tohye/Documents/Capstone/TradingAPP/scalers'
+
+    os.makedirs(models_dir, exist_ok=True)
+    os.makedirs(scalers_dir, exist_ok=True)
+
+    # Use absolute paths for saving
+    model_filename = os.path.join(models_dir, f'lstm_model_{ticker_symbol}_{timestamp}.keras')
+    feature_scaler_filename = os.path.join(scalers_dir, f'feature_scaler_{ticker_symbol}_{timestamp}.pkl')
+    target_scaler_filename = os.path.join(scalers_dir, f'target_scaler_{ticker_symbol}_{timestamp}.pkl')
+
+    # Your code to save model and scalers...
     model.save(model_filename)
     joblib.dump(feature_scaler, feature_scaler_filename)
     joblib.dump(target_scaler, target_scaler_filename)

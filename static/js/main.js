@@ -95,11 +95,11 @@ $('#ExecuteLSTMBtn').click(function() {
         url: '/execute_lstm_predictions',
         type: 'GET', // or 'POST' if you need to send data
         success: function(response) {
+            // Assuming response is in the format { "EURGBP": prediction_value }
+            const predictionValue = response['EURGBP'];
             // Update the prediction and rank spans with the response data
-            for (let [ticker, data] of Object.entries(response)) {
-                $(`#${ticker}-prediction .prediction-value`).text(data.prediction);
-                $(`#${ticker}-prediction .prediction-rank`).text(data.rank);
-            }
+            // Update the LSTM prediction span with the received prediction value
+            $('#lstmPrediction1').text(predictionValue.toFixed(2));  // Adjust decimal places as needed
         },
         error: function(error) {
             console.log('Error executing LSTM predictions:', error);
