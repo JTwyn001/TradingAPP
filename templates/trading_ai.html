@@ -107,21 +107,23 @@
                 </ul>
             </div>
 
-            <div class="lstm-prediction-section col-md-12">
+            <div class="lstm-prediction-container col-md-12">
 
                 <div class="row d-flex justify-content-center">
-                    <h5 class="text-light text-center">LSTM Predictions and Rankings</h5>
+                    <h5 class="text-dark text-center">LSTM Predictions and Rankings</h5>
 
-                    <p class="details">NVDA: <span id="stock1lstm" class="balance-equity">0.00</span></p>
-                    <p class="details">AAPL: <span id="stock2lstm" class="balance-equity">0.00</span></p>
-                    <p class="details">A: <span id="stock3lstm"></span></p>
-                    <ul id="lstmPredictionsList">
-                        {% for stock in lstm_stocks %}
-                        <li id="{{ stock }}-prediction">
-                            {{ stock }}: <span class="prediction-value">Prediction</span> - Rank: <span class="prediction-rank">Rank</span>
-                        </li>
-                        {% endfor %}
-                    </ul>
+                    <p class="details">EURUSD: <span id="forex1lstm" class="forex-lstm">0.00</span></p>
+                    <p class="details">EURGBP: <span id="forex2lstm" class="forex-lstm">0.00</span></p>
+                    <p class="details">EURGBP: <span id="forex3lstm" class="forex-lstm">0.00</span></p>
+                    <p class="details">EURGBP: <span id="forex4lstm" class="forex-lstm">0.00</span></p>
+                    <p class="details">EURGBP: <span id="forex5lstm" class="forex-lstm">0.00</span></p>
+<!--                    <ul id="lstmPredictionsList">-->
+<!--                        {% for stock in lstm_stocks %}-->
+<!--                        <li id="{{ stock }}-prediction">-->
+<!--                            {{ stock }}: <span class="prediction-value">Prediction</span> - Rank: <span class="prediction-rank">Rank</span>-->
+<!--                        </li>-->
+<!--                        {% endfor %}-->
+<!--                    </ul>-->
                     <div class="btn-container text-center">
                         <button id="ExecuteLSTMBtn" class="btn button btn-success">Execute LSTM</button>
                     </div>
