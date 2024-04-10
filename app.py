@@ -186,6 +186,9 @@ def execute_lstm_predictions():
         predicted_change_scaled = model.predict(prepared_data)
         predicted_change = target_scaler.inverse_transform(predicted_change_scaled.reshape(-1, 1))[0][0]
 
+        # Convert numpy.float32 to Python float for JSON serialization
+        predicted_change = float(predicted_change)
+
         # Return the prediction for EURGBP
         return jsonify({"EURGBP": predicted_change})
     else:
@@ -229,12 +232,10 @@ def preprocess_data_for_lstm_mt(ticker, feature_scaler):
 
 
 def load_latest_model_and_scaler_for_ticker(ticker_symbol, model_dir='./models', scaler_dir='./scalers'):
-    model_files = [os.path.join(model_dir, f) for f in os.listdir(model_dir) if
-                   f.endswith('.h5') and ticker_symbol in f]
-    feature_scaler_files = [os.path.join(scaler_dir, f) for f in os.listdir(scaler_dir) if
-                            'feature_scaler' in f and f.endswith('.pkl') and ticker_symbol in f]
-    target_scaler_files = [os.path.join(scaler_dir, f) for f in os.listdir(scaler_dir) if
-                           'target_scaler' in f and f.endswith('.pkl') and ticker_symbol in f]
+    # Adjusted to look for '.keras' files instead of '.h5'
+    model_files = [os.path.join(model_dir, f) for f in os.listdir(model_dir) if f.endswith('.keras') and ticker_symbol in f]
+    feature_scaler_files = [os.path.join(scaler_dir, f) for f in os.listdir(scaler_dir) if 'feature_scaler' in f and f.endswith('.pkl') and ticker_symbol in f]
+    target_scaler_files = [os.path.join(scaler_dir, f) for f in os.listdir(scaler_dir) if 'target_scaler' in f and f.endswith('.pkl') and ticker_symbol in f]
 
     # Ensure there are files before using max to avoid ValueError
     latest_model_file = max(model_files, key=os.path.getctime) if model_files else None
@@ -242,7 +243,7 @@ def load_latest_model_and_scaler_for_ticker(ticker_symbol, model_dir='./models',
     latest_target_scaler_file = max(target_scaler_files, key=os.path.getctime) if target_scaler_files else None
 
     # Load the latest files if they exist
-    model = load_model(latest_model_file) if latest_model_file else None
+    model = tf.keras.models.load_model(latest_model_file) if latest_model_file else None
     feature_scaler = joblib.load(latest_feature_scaler_file) if latest_feature_scaler_file else None
     target_scaler = joblib.load(latest_target_scaler_file) if latest_target_scaler_file else None
 

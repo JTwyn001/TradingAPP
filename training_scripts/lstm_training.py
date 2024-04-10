@@ -152,7 +152,7 @@ def main():
     target_scaler_filename = os.path.join(scalers_dir, f'target_scaler_{ticker_symbol}_{timestamp}.pkl')
 
     # Your code to save model and scalers...
-    model.save(model_filename)
+    model.save(model_filename, save_format='tf')
     joblib.dump(feature_scaler, feature_scaler_filename)
     joblib.dump(target_scaler, target_scaler_filename)
 
