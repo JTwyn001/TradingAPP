@@ -177,17 +177,25 @@ def execute_lstm_predictions():
 
     # Load model and scalers
     model, feature_scaler, target_scaler = load_latest_model_and_scaler_for_ticker(ticker_symbol)
+    print("Model and scalers loaded successfully.")
 
     # Preprocess data for EURGBP using MT5
     prepared_data = preprocess_data_for_lstm_mt(ticker_symbol, feature_scaler)
+    print("Data preprocessed successfully.")
 
     if prepared_data is not None:
+        print(f"Prepared data shape: {prepared_data.shape}")
+
         # Get prediction
         predicted_change_scaled = model.predict(prepared_data)
+        print(f"Scaled prediction: {predicted_change_scaled}")
+
         predicted_change = target_scaler.inverse_transform(predicted_change_scaled.reshape(-1, 1))[0][0]
+        print(f"Inverse transformed prediction: {predicted_change}")
 
         # Convert numpy.float32 to Python float for JSON serialization
         predicted_change = float(predicted_change)
+        print(f"Final prediction: {predicted_change}")
 
         # Return the prediction for EURGBP
         return jsonify({"EURGBP": predicted_change})
