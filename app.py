@@ -173,34 +173,26 @@ def fetch_recent_data(ticker, window_size=30):
 
 @app.route('/execute_lstm_predictions', methods=['GET'])
 def execute_lstm_predictions():
-    ticker_symbol = 'EURGBP'
+    tickers = ['EURUSD', 'GPS', 'AAPL', 'BTCUSD', 'EURUSD']
+    predictions = {}
 
-    # Load model and scalers
-    model, feature_scaler, target_scaler = load_latest_model_and_scaler_for_ticker(ticker_symbol)
-    print("Model and scalers loaded successfully.")
+    for ticker_symbol in tickers:
+        # Load model and scalers for each ticker
+        model, feature_scaler, target_scaler = load_latest_model_and_scaler_for_ticker(ticker_symbol)
 
-    # Preprocess data for EURGBP using MT5
-    prepared_data = preprocess_data_for_lstm_mt(ticker_symbol, feature_scaler)
-    print("Data preprocessed successfully.")
+        # Preprocess data for each ticker
+        prepared_data = preprocess_data_for_lstm_mt(ticker_symbol, feature_scaler)
 
-    if prepared_data is not None:
-        print(f"Prepared data shape: {prepared_data.shape}")
+        if prepared_data is not None:
+            # Get prediction for each ticker
+            predicted_change_scaled = model.predict(prepared_data)
+            predicted_change = target_scaler.inverse_transform(predicted_change_scaled.reshape(-1, 1))[0][0]
 
-        # Get prediction
-        predicted_change_scaled = model.predict(prepared_data)
-        print(f"Scaled prediction: {predicted_change_scaled}")
+            # Convert numpy.float32 to Python float for JSON serialization
+            predictions[ticker_symbol] = float(predicted_change)
 
-        predicted_change = target_scaler.inverse_transform(predicted_change_scaled.reshape(-1, 1))[0][0]
-        print(f"Inverse transformed prediction: {predicted_change}")
-
-        # Convert numpy.float32 to Python float for JSON serialization
-        predicted_change = float(predicted_change)
-        print(f"Final prediction: {predicted_change}")
-
-        # Return the prediction for EURGBP
-        return jsonify({"EURGBP": predicted_change})
-    else:
-        return jsonify({"error": "Data preparation failed"})
+    # Return the predictions for all tickers
+    return jsonify(predictions)
 
 
 def preprocess_data_for_lstm_mt(ticker, feature_scaler):

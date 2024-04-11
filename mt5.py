@@ -263,7 +263,7 @@ def get_top_10_momentum_stocks():
         quit()  # Exit the function if MT5 fails to initialize
 
     sp500_stocks = pd.read_csv('mt5_stock_tickers.csv')
-    tickers = sp500_stocks['Ticker'].tolist()[:500]
+    tickers = sp500_stocks['Ticker'].tolist()[:596]
 
     end_date = pd.Timestamp.now()
     periods = {
@@ -308,8 +308,8 @@ def get_top_10_momentum_stocks():
 
 
 # Running the test
-# top_10_momentum_stocks = get_top_10_momentum_stocks()
-# print("Top 10 Momentum Stocks:", top_10_momentum_stocks)
+top_10_momentum_stocks = get_top_10_momentum_stocks()
+print("Top 10 Momentum Stocks:", top_10_momentum_stocks)
 
 def get_top_10_momentum_forex():
     if not mt.initialize():
@@ -317,7 +317,7 @@ def get_top_10_momentum_forex():
         quit()
 
     forex_tickers = pd.read_csv('mt5_forex_tickers.csv')
-    tickers = forex_tickers['Ticker'].tolist()[:60]
+    tickers = forex_tickers['Ticker'].tolist()[:62]
 
     end_date = pd.Timestamp.now()
     periods = {

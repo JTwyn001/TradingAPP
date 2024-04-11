@@ -90,22 +90,22 @@ $(document).ready(function() {
 });
 
 $('#ExecuteLSTMBtn').click(function() {
-    // Send a request to the backend to execute LSTM predictions
+    // Send a request to the backend to execute LSTM predictions for multiple tickers
     $.ajax({
         url: '/execute_lstm_predictions',
         type: 'GET', // or 'POST' if you need to send data
         success: function(response) {
-            // Assuming response is in the format { "EURGBP": prediction_value }
-            const predictionValue = response['EURGBP'];
-            // Update the prediction and rank spans with the response data
-            // Update the LSTM prediction span with the received prediction value
-            $('#lstmPrediction1').text(predictionValue.toFixed(2));  // Adjust decimal places as needed
+            // Loop through each ticker in the response and update its corresponding span
+            Object.entries(response).forEach(([ticker, prediction]) => {
+                $(`#lstmPrediction-${ticker}`).text(prediction.toFixed(2)); // Adjust decimal places as needed
+            });
         },
         error: function(error) {
             console.log('Error executing LSTM predictions:', error);
         }
     });
 });
+
 
 $('#GetPredictionsBtn').click(function() {
     var selectedStocks = [];
