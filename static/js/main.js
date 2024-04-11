@@ -90,14 +90,14 @@ $(document).ready(function() {
 });
 
 $('#ExecuteLSTMBtn').click(function() {
-    // Send a request to the backend to execute LSTM predictions for multiple tickers
     $.ajax({
         url: '/execute_lstm_predictions',
-        type: 'GET', // or 'POST' if you need to send data
+        type: 'GET',
         success: function(response) {
-            // Loop through each ticker in the response and update its corresponding span
             Object.entries(response).forEach(([ticker, prediction]) => {
-                $(`#lstmPrediction-${ticker}`).text(prediction.toFixed(2)); // Adjust decimal places as needed
+                // Remove the suffix from the ticker name if it exists
+                let cleanTicker = ticker.split('.')[0];
+                $(`#lstmPrediction-${cleanTicker}`).text(prediction.toFixed(3));
             });
         },
         error: function(error) {
@@ -105,6 +105,7 @@ $('#ExecuteLSTMBtn').click(function() {
         }
     });
 });
+
 
 
 $('#GetPredictionsBtn').click(function() {
