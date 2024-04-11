@@ -108,28 +108,59 @@
             </div>
 
             <div class="lstm-prediction-container col-md-12">
-
                 <div class="row d-flex justify-content-center">
-                    <h5 class="text-dark text-center">LSTM Predictions and Rankings</h5>
+                    <h5 class="text-dark text-center">LSTM Predictions</h5>
 
-                    <p class="details">EURGBP: <span id="lstmPrediction-EURGBP" class="lstm-prediction">0.00</span></p>
-                    <p class="details">GPS: <span id="lstmPrediction-GPS" class="lstm-prediction">0.00</span></p>
-                    <p class="details">AAPL: <span id="lstmPrediction-AAPL" class="lstm-prediction">0.00</span></p>
-                    <p class="details">BTCUSD: <span id="lstmPrediction-BTCUSD" class="lstm-prediction">0.00</span></p>
-                    <p class="details">EURUSD: <span id="lstmPrediction-EURUSD" class="lstm-prediction">0.00</span></p>
-<!--                    <ul id="lstmPredictionsList">-->
-<!--                        {% for stock in lstm_stocks %}-->
-<!--                        <li id="{{ stock }}-prediction">-->
-<!--                            {{ stock }}: <span class="prediction-value">Prediction</span> - Rank: <span class="prediction-rank">Rank</span>-->
-<!--                        </li>-->
-<!--                        {% endfor %}-->
-<!--                    </ul>-->
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th scope="col">Ticker</th>
+                            <th scope="col">LSTM Prediction</th>
+                            <th scope="col">Rank</th>
+                            <th scope="col">HQM Score</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td>EURUSD</td>
+                            <td><span id="lstmPrediction-EURUSD" class="lstm-prediction">0.00</span></td>
+                            <td>...</td>
+                            <td>...</td>
+                        </tr>
+                        <tr>
+                            <td>GPS</td>
+                            <td><span id="lstmPrediction-GPS" class="lstm-prediction">0.00</span></td>
+                            <td>...</td>
+                            <td>...</td>
+                        </tr>
+                        <tr>
+                            <td>AAPL</td>
+                            <td><span id="lstmPrediction-AAPL" class="lstm-prediction">0.00</span></td>
+                            <td>...</td>
+                            <td>...</td>
+                        </tr>
+                        <tr>
+                            <td>BTCUSD</td>
+                            <td><span id="lstmPrediction-BTCUSD" class="lstm-prediction">0.00</span></td>
+                            <td>...</td>
+                            <td>...</td>
+                        </tr>
+                        <tr>
+                            <td>AUDJPY</td>
+                            <td><span id="lstmPrediction-AUDJPY" class="lstm-prediction">0.00</span></td>
+                            <td>...</td>
+                            <td>...</td>
+                        </tr>
+                        </tbody>
+                    </table>
+
                     <div class="btn-container text-center">
                         <button id="ExecuteLSTMBtn" class="btn button btn-success">Execute LSTM</button>
                     </div>
 
                 </div>
             </div>
+
 
             <div class="my-2">
                 <label for="stoplossSlider" class="form-label" style="color: white;">Trailing Stop-Loss : <span id="stoplossSliderValue">0%</span></label>
