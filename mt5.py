@@ -3,6 +3,7 @@ import MetaTrader5 as mt
 import time
 import numpy as np
 import datetime
+import yfinance as yf
 import pandas_ta as ta
 from sklearn.preprocessing import StandardScaler  # Assuming you're using StandardScaler for feature scaling
 from pandas.tseries.offsets import BDay
@@ -257,13 +258,31 @@ def fetch_historical_data(ticker, start_date, end_date):
     return data
 
 
-def get_top_10_momentum_stocks():
-    if not mt.initialize():
-        print("initialize() failed, error code =", mt.last_error())
-        quit()  # Exit the function if MT5 fails to initialize
+def fetch_historical_data_fx(ticker, start_date, end_date):
+    # Append '=X' to the ticker symbol for forex data
+    forex_ticker = ticker + '=X'
+    data = yf.download(forex_ticker, start=start_date.strftime('%Y-%m-%d'), end=end_date.strftime('%Y-%m-%d'))
+    if data.empty:
+        print(f"No data for {forex_ticker}")
+        return None
+    return data
 
-    sp500_stocks = pd.read_csv('mt5_stock_tickers.csv')
-    tickers = sp500_stocks['Ticker'].tolist()[:596]
+
+def fetch_historical_data_yf(ticker, start_date, end_date):
+    data = yf.download(ticker, start=start_date.strftime('%Y-%m-%d'), end=end_date.strftime('%Y-%m-%d'))
+
+    if data.empty:
+        print(f"No data for {ticker}")
+        return None
+
+    data.reset_index(inplace=True)
+    data.set_index('Date', inplace=True)
+    return data
+
+
+def get_top_10_momentum_stocks():
+    sp500_stocks = pd.read_csv('sp_500_stocks.csv')
+    tickers = sp500_stocks['Ticker'].tolist()  # Limiting for quick testing
 
     end_date = pd.Timestamp.now()
     periods = {
@@ -273,51 +292,39 @@ def get_top_10_momentum_stocks():
         'One-Month': end_date - BDay(21),
     }
 
-    # Initialize hqm_dataframe with tickers as the index
-    hqm_dataframe = pd.DataFrame(index=tickers, columns=['One-Year Return Percentile', 'Six-Month Return Percentile',
-                                                         'Three-Month Return Percentile', 'One-Month Return Percentile',
-                                                         'HQM Score'])
+    hqm_dataframe = pd.DataFrame(index=tickers)
 
-    for ticker in tickers:
+    for ticker in tickers:  # Limiting the number of tickers for quicker testing
         print(f"Fetching data for {ticker}...")
-        price_data = {}
         for period_name, start_date in periods.items():
-            data = fetch_historical_data(ticker, start_date, end_date)
+            data = fetch_historical_data_yf(ticker, start_date, end_date)
             if data is not None:
-                price_return = data['close'].pct_change().dropna().mean() * 252  # Annualized return
-                price_data[period_name] = price_return
+                price_return = data['Close'].pct_change().dropna().mean() * 252  # Annualized return
+                hqm_dataframe.loc[ticker, period_name + ' Return'] = price_return
 
-        if price_data:
-            # Use temp_df with correct column names
-            temp_df = pd.DataFrame([price_data], columns=periods.keys())
-            for period_name in periods.keys():
-                hqm_dataframe.loc[ticker, period_name + ' Return Percentile'] = stats.percentileofscore(
-                    temp_df[period_name], temp_df.at[0, period_name])
+    for period_name in periods.keys():
+        hqm_dataframe[period_name + ' Return Percentile'] = hqm_dataframe[period_name + ' Return'].rank(pct=True)
 
-    # Calculate HQM Score as the mean of percentile scores
-    hqm_dataframe['HQM Score'] = hqm_dataframe.mean(axis=1)
+    hqm_dataframe['HQM Score'] = hqm_dataframe[[period + ' Return Percentile' for period in periods.keys()]].mean(
+        axis=1)
 
-    # Reset index to make 'Ticker' a column
-    hqm_dataframe.reset_index(inplace=True)
-    hqm_dataframe.rename(columns={'index': 'Ticker'}, inplace=True)
+    top_10_hqm_stocks = hqm_dataframe.sort_values(by='HQM Score', ascending=False).head(10)
 
-    # Rank stocks by HQM Score and select top 10
-    top_10_hqm_stocks = hqm_dataframe.sort_values(by='HQM Score', ascending=False).head(10)['Ticker'].tolist()
+    # Print top 10 stocks with their returns, percentiles, and HQM Scores for clarity
+    print(top_10_hqm_stocks[[period + ' Return' for period in periods.keys()] +
+                            [period + ' Return Percentile' for period in periods.keys()] +
+                            ['HQM Score']])
 
-    return top_10_hqm_stocks
+    return top_10_hqm_stocks.index.tolist()
 
 
-# Running the test
-top_10_momentum_stocks = get_top_10_momentum_stocks()
-print("Top 10 Momentum Stocks:", top_10_momentum_stocks)
+# top_10_momentum_stocks = get_top_10_momentum_stocks()
+# print("Top 10 Momentum Stocks:", top_10_momentum_stocks)
+
 
 def get_top_10_momentum_forex():
-    if not mt.initialize():
-        print("initialize() failed, error code =", mt.last_error())
-        quit()
-
     forex_tickers = pd.read_csv('mt5_forex_tickers.csv')
-    tickers = forex_tickers['Ticker'].tolist()[:62]
+    tickers = forex_tickers['Ticker'].tolist()[:62]  # Adjust as needed
 
     end_date = pd.Timestamp.now()
     periods = {
@@ -327,32 +334,28 @@ def get_top_10_momentum_forex():
         'One-Month': end_date - BDay(21),
     }
 
-    hqm_dataframe = pd.DataFrame(index=tickers, columns=['One-Year Return Percentile', 'Six-Month Return Percentile',
-                                                         'Three-Month Return Percentile', 'One-Month Return Percentile',
-                                                         'HQM Score'])
+    hqm_dataframe = pd.DataFrame(index=tickers)
 
     for ticker in tickers:
         print(f"Fetching data for {ticker}...")
-        price_data = {}
         for period_name, start_date in periods.items():
-            data = fetch_historical_data(ticker, start_date, end_date)
+            data = fetch_historical_data_fx(ticker, start_date, end_date)
             if data is not None:
-                price_return = data['close'].pct_change().dropna().mean() * 252  # Annualized return
-                price_data[period_name] = price_return
+                price_return = data['Close'].pct_change().dropna().mean() * 252
+                hqm_dataframe.loc[ticker, period_name + ' Return'] = price_return
 
-        if price_data:
-            temp_df = pd.DataFrame([price_data], columns=periods.keys())
-            for period_name in periods.keys():
-                hqm_dataframe.loc[ticker, period_name + ' Return Percentile'] = stats.percentileofscore(
-                    temp_df[period_name], temp_df.at[0, period_name])
+    for period_name in periods.keys():
+        hqm_dataframe[period_name + ' Return Percentile'] = hqm_dataframe[period_name + ' Return'].rank(pct=True)
 
-    hqm_dataframe['HQM Score'] = hqm_dataframe.mean(axis=1)
-    hqm_dataframe.reset_index(inplace=True)
-    hqm_dataframe.rename(columns={'index': 'Ticker'}, inplace=True)
+    hqm_dataframe['HQM Score'] = hqm_dataframe[[period + ' Return Percentile' for period in periods.keys()]].mean(
+        axis=1)
 
-    top_10_hqm_forex = hqm_dataframe.sort_values(by='HQM Score', ascending=False).head(10)['Ticker'].tolist()
+    top_10_hqm_forex = hqm_dataframe.sort_values(by='HQM Score', ascending=False).head(10)
 
-    return top_10_hqm_forex
+    # Explicitly print all data for the top 10 momentum forex
+    print(top_10_hqm_forex.to_string())
+
+    return top_10_hqm_forex.index.tolist()
 
 
 if __name__ == '__main__':
