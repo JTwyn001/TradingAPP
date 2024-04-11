@@ -176,7 +176,7 @@ def execute_lstm_predictions():
     tickers = ['EURUSD', 'SEKJPY', 'EURNOK', 'MU', 'NRG']
     predictions = {}
     mt5_tick = ['EURUSD', 'SEKJPY', 'EURNOK', 'MU.NAS', 'NRG.NYSE']
-    for ticker_symbol in tickers:
+    for ticker_symbol in mt5_tick:
         # Load model and scalers for each ticker
         model, feature_scaler, target_scaler = load_latest_model_and_scaler_for_ticker(ticker_symbol)
 
@@ -207,9 +207,9 @@ def preprocess_data_for_lstm_mt(ticker, feature_scaler):
     utc_to = int(end_date.timestamp())
 
     rates = mt.copy_rates_range(ticker, mt.TIMEFRAME_D1, utc_from, utc_to)
-
     if rates is None or len(rates) == 0:
-        print(f"No recent data fetched for {ticker}")
+        error_code = mt.last_error()
+        print(f"No recent data fetched for {ticker}. Error: {error_code}")
         return None
 
     data = pd.DataFrame(rates)
