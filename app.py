@@ -173,9 +173,9 @@ def fetch_recent_data(ticker, window_size=30):
 
 @app.route('/execute_lstm_predictions', methods=['GET'])
 def execute_lstm_predictions():
-    tickers = ['EURUSD', 'GPS', 'AAPL', 'BTCUSD', 'EURUSD']
+    tickers = ['EURUSD', 'SEKJPY', 'EURNOK', 'MU', 'NRG']
     predictions = {}
-
+    mt5_tick = ['EURUSD', 'SEKJPY', 'EURNOK', 'MU.NAS', 'NRG.NYSE']
     for ticker_symbol in tickers:
         # Load model and scalers for each ticker
         model, feature_scaler, target_scaler = load_latest_model_and_scaler_for_ticker(ticker_symbol)

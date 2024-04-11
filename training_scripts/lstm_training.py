@@ -23,7 +23,7 @@ def download_and_preprocess_data(start_date):
         end_date = (current_date - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
 
     # Download data up to the current date
-    data = yf.download(tickers='EURNOK=X', start='2012-02-10', end='2024-03-1')
+    data = yf.download(tickers='MU', start='2012-02-10', end='2024-03-1')
 
     print(data.head())  # Add this line to print the first few rows of the DataFrame
 
@@ -136,7 +136,7 @@ def main():
     # Generate a timestamp for the filename
     timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
 
-    ticker_symbol = 'EURNOK'
+    ticker_symbol = 'MU.NAS'
     # Include the ticker symbol and timestamp in the filenames for clarity
     # Create directories if they don't exist
     # Ensure directories for models and scalers exist
