@@ -171,9 +171,8 @@ def fetch_recent_data(ticker, window_size=30):
         return None
 
 
-@app.route('/execute_lstm_predictions', methods=['GET'])
-def execute_lstm_predictions():
-    tickers = ['EURUSD', 'SEKJPY', 'EURNOK', 'MU', 'NRG']
+@app.route('/execute_ml_predictions', methods=['GET'])
+def execute_ml_predictions():
     predictions = {}
     mt5_tick = ['EURUSD', 'SEKJPY', 'EURNOK', 'MU.NAS', 'NRG.NYSE']
     for ticker_symbol in mt5_tick:

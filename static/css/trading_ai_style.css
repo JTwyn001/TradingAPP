@@ -265,7 +265,7 @@ body{
     padding: 3px 0px 3px 20px;
     height: max-content;
 }
-.lstm-prediction-container{
+.ml-prediction-container{
     background-color: #ffffff;
     border-color: blue;
     box-shadow: 0 0 20px rgb(25, 0, 255),

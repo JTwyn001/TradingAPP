@@ -89,9 +89,9 @@ $(document).ready(function() {
     updateChartAndButtonText("Choose Forex Instrument", "BTCUSD");
 });
 
-$('#ExecuteLSTMBtn').click(function() {
+$('#ExecuteMLBtn').click(function() {
     $.ajax({
-        url: '/execute_lstm_predictions',
+        url: '/execute_ml_predictions',
         type: 'GET',
         success: function(response) {
             Object.entries(response).forEach(([ticker, prediction]) => {

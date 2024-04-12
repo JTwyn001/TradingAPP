@@ -107,17 +107,17 @@
                 </ul>
             </div>
 
-            <div class="lstm-prediction-container col-md-12">
+            <div class="ml-prediction-container col-md-12">
                 <div class="row d-flex justify-content-center">
-                    <h5 class="text-dark text-center">LSTM Predictions</h5>
+                    <h5 class="text-dark text-center">ML Predictions</h5>
 
                     <table class="table">
                         <thead>
                         <tr>
                             <th scope="col">Ticker</th>
                             <th scope="col">LSTM (Next Close)</th>
+                            <th scope="col">GBM (Next Close)</th>
                             <th scope="col">Rank</th>
-                            <th scope="col">HQM Score</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -155,7 +155,7 @@
                     </table>
 
                     <div class="btn-container text-center">
-                        <button id="ExecuteLSTMBtn" class="btn button btn-success">Execute LSTM</button>
+                        <button id="ExecuteMLBtn" class="btn button btn-success">Execute ML Prediction</button>
                     </div>
 
                 </div>
