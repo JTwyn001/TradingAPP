@@ -22,8 +22,8 @@ param_grid = {
 }
 
 
-def download_and_preprocess_data(ticker, start_date='2023-01-01', end_date='2024-04-01'):
-    data = yf.download(tickers=ticker, start=start_date, end=end_date)
+def download_and_preprocess_data(ticker, start_date='2010-01-01', end_date='2024-04-01'):
+    data = yf.download(tickers='SEKJPY=X', start=start_date, end=end_date)
 
     # RSI
     data['RSI'] = ta.rsi(data['Close'], length=15)
@@ -82,7 +82,7 @@ def plot_prediction(y_test, y_pred, title='GBM Predicted vs Actual'):
 
 
 def main():
-    ticker = 'MU'
+    ticker = 'SEKJPY'
     features, target = download_and_preprocess_data(ticker)
     # Split the data
     X_train, X_test, y_train, y_test = train_test_split(features, target, test_size=0.2, random_state=42)

@@ -14,6 +14,7 @@ import time
 import numpy as np  # The Numpy numerical computing library
 import pandas as pd  # The Pandas data science library
 import pandas_ta as ta
+from flask import jsonify, abort
 import requests  # The requests library for HTTP requests in Python
 import xlsxwriter  # The XlsxWriter library for
 import math  # The Python math module
@@ -173,25 +174,37 @@ def fetch_recent_data(ticker, window_size=30):
 
 @app.route('/execute_ml_predictions', methods=['GET'])
 def execute_ml_predictions():
-    predictions = {}
-    mt5_tick = ['EURUSD', 'SEKJPY', 'EURNOK', 'MU.NAS', 'NRG.NYSE']
-    for ticker_symbol in mt5_tick:
-        # Load model and scalers for each ticker
-        model, feature_scaler, target_scaler = load_latest_model_and_scaler_for_ticker(ticker_symbol)
+    tickers = ['EURUSD', 'SEKJPY', 'EURNOK', 'MU.NAS', 'NRG.NYSE']
+    combined_predictions = {}
 
-        # Preprocess data for each ticker
-        prepared_data = preprocess_data_for_lstm_mt(ticker_symbol, feature_scaler)
+    for ticker_symbol in tickers:
+        combined_predictions[ticker_symbol] = {'lstm': None, 'gbm': None}
 
-        if prepared_data is not None:
-            # Get prediction for each ticker
-            predicted_change_scaled = model.predict(prepared_data)
-            predicted_change = target_scaler.inverse_transform(predicted_change_scaled.reshape(-1, 1))[0][0]
+        try:
+            # Load models and scalers
+            lstm_model, lstm_feature_scaler, lstm_target_scaler = load_latest_model_and_scaler_for_ticker(ticker_symbol)
+            gbm_model = load_latest_gbm_model_for_ticker(ticker_symbol)
 
-            # Convert numpy.float32 to Python float for JSON serialization
-            predictions[ticker_symbol] = float(predicted_change)
+            # Preprocess and predict using LSTM
+            if lstm_model and lstm_feature_scaler and lstm_target_scaler:
+                lstm_prepared_data = preprocess_data_for_lstm_mt(ticker_symbol, lstm_feature_scaler)
+                if lstm_prepared_data is not None:
+                    lstm_predicted_change_scaled = lstm_model.predict(lstm_prepared_data)
+                    lstm_predicted_change = lstm_target_scaler.inverse_transform(lstm_predicted_change_scaled.reshape(-1, 1))[0][0]
+                    combined_predictions[ticker_symbol]['lstm'] = float(lstm_predicted_change)
 
-    # Return the predictions for all tickers
-    return jsonify(predictions)
+            # Preprocess and predict using GBM
+            if gbm_model:
+                gbm_prepared_data = preprocess_data_for_gbm(ticker_symbol, None)  # Update this if scaling is needed
+                if gbm_prepared_data is not None:
+                    gbm_predicted_change = gbm_model.predict(gbm_prepared_data)
+                    combined_predictions[ticker_symbol]['gbm'] = float(gbm_predicted_change[0])
+
+        except Exception as e:
+            logging.error(f"Error processing {ticker_symbol}: {str(e)}")
+            abort(500, description=f"Error processing {ticker_symbol}")
+
+    return jsonify(combined_predictions)
 
 
 def preprocess_data_for_lstm_mt(ticker, feature_scaler):
@@ -230,11 +243,62 @@ def preprocess_data_for_lstm_mt(ticker, feature_scaler):
     return features_reshaped
 
 
+def preprocess_data_for_gbm(ticker, feature_scaler):
+    if not mt.initialize():
+        print("MT5 initialize() failed, error code =", mt.last_error())
+        return None
+
+    end_date = datetime.datetime.now()
+    start_date = end_date - datetime.timedelta(days=365)  # Example: last 365 days
+
+    utc_from = int(start_date.timestamp())
+    utc_to = int(end_date.timestamp())
+
+    rates = mt.copy_rates_range(ticker, mt.TIMEFRAME_D1, utc_from, utc_to)
+    if rates is None or len(rates) == 0:
+        error_code = mt.last_error()
+        print(f"No recent data fetched for {ticker}. Error: {error_code}")
+        return None
+
+    data = pd.DataFrame(rates)
+    data['time'] = pd.to_datetime(data['time'], unit='s')
+    data.set_index('time', inplace=True)
+
+    # Ensure all columns are present
+    if 'volume' in data.columns:
+        data['OBV'] = ta.obv(data['close'], data['volume']).astype(float)
+    else:
+        print("Volume data not available for OBV calculation.")
+        data['OBV'] = np.nan  # Handle missing OBV or adjust your model to work without it
+
+
+    # Ensure all indicators used during training are calculated
+    data['RSI'] = ta.rsi(data['close'], length=15)
+    data['EMA20'] = ta.ema(data['close'], length=20)
+    data['MACD'] = ta.macd(data['close'])['MACD_12_26_9']
+    data['SMA50'] = data['close'].rolling(window=50).mean()
+    data['OBV'] = ta.obv(data['close'], data['volume']).astype(float)
+    bollinger = ta.bbands(data['close'], length=20, std=2)
+    data['BOLL_Upper'] = bollinger['BBL_20_2.0']
+    data['BOLL_Lower'] = bollinger['BBU_20_2.0']
+    data['ATR'] = ta.atr(data['high'], data['low'], data['close'], length=14)
+    data.dropna(inplace=True)
+
+    features = data[['close', 'RSI', 'EMA20', 'MACD', 'SMA50', 'OBV', 'BOLL_Upper', 'BOLL_Lower', 'ATR']].tail(1)
+    if feature_scaler:
+        features_scaled = feature_scaler.transform(features)
+        return features_scaled
+    else:
+        return features.values  # If no scaling was performed during training
+
 def load_latest_model_and_scaler_for_ticker(ticker_symbol, model_dir='./models', scaler_dir='./scalers'):
     # Adjusted to look for '.keras' files instead of '.h5'
-    model_files = [os.path.join(model_dir, f) for f in os.listdir(model_dir) if f.endswith('.keras') and ticker_symbol in f]
-    feature_scaler_files = [os.path.join(scaler_dir, f) for f in os.listdir(scaler_dir) if 'feature_scaler' in f and f.endswith('.pkl') and ticker_symbol in f]
-    target_scaler_files = [os.path.join(scaler_dir, f) for f in os.listdir(scaler_dir) if 'target_scaler' in f and f.endswith('.pkl') and ticker_symbol in f]
+    model_files = [os.path.join(model_dir, f) for f in os.listdir(model_dir) if
+                   f.endswith('.keras') and ticker_symbol in f]
+    feature_scaler_files = [os.path.join(scaler_dir, f) for f in os.listdir(scaler_dir) if
+                            'feature_scaler' in f and f.endswith('.pkl') and ticker_symbol in f]
+    target_scaler_files = [os.path.join(scaler_dir, f) for f in os.listdir(scaler_dir) if
+                           'target_scaler' in f and f.endswith('.pkl') and ticker_symbol in f]
 
     # Ensure there are files before using max to avoid ValueError
     latest_model_file = max(model_files, key=os.path.getctime) if model_files else None
@@ -247,6 +311,21 @@ def load_latest_model_and_scaler_for_ticker(ticker_symbol, model_dir='./models',
     target_scaler = joblib.load(latest_target_scaler_file) if latest_target_scaler_file else None
 
     return model, feature_scaler, target_scaler
+
+
+def load_latest_gbm_model_for_ticker(ticker_symbol, model_dir='./gbm_models'):
+    # Look for joblib files specific to the GBM models
+    model_files = [os.path.join(model_dir, f) for f in os.listdir(model_dir) if f.endswith('.joblib') and ticker_symbol in f]
+
+    # Ensure there are files before using max to avoid ValueError
+    latest_model_file = max(model_files, key=os.path.getctime) if model_files else None
+
+    # Load the latest file if it exists
+    model = joblib.load(latest_model_file) if latest_model_file else None
+
+    # Return the model (No feature_scaler is used here, based on your GBM setup)
+    return model
+
 
 
 # Function to load the latest model and scaler

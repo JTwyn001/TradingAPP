@@ -90,22 +90,24 @@ $(document).ready(function() {
 });
 
 $('#ExecuteMLBtn').click(function() {
+    // Send a request to the backend to execute ML predictions
     $.ajax({
         url: '/execute_ml_predictions',
         type: 'GET',
         success: function(response) {
-            Object.entries(response).forEach(([ticker, prediction]) => {
+            Object.entries(response).forEach(([ticker, predictions]) => {
                 // Remove the suffix from the ticker name if it exists
                 let cleanTicker = ticker.split('.')[0];
-                $(`#lstmPrediction-${cleanTicker}`).text(prediction.toFixed(3));
+                // Update LSTM and GBM predictions on the page
+                $(`#lstmPrediction-${cleanTicker}`).text(predictions.lstm.toFixed(3)); // Adjust decimal places as needed
+                $(`#gbmPrediction-${cleanTicker}`).text(predictions.gbm.toFixed(3)); // Adjust decimal places as needed
             });
         },
         error: function(error) {
-            console.log('Error executing LSTM predictions:', error);
+            console.log('Error executing ML predictions:', error);
         }
     });
 });
-
 
 
 $('#GetPredictionsBtn').click(function() {
