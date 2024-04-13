@@ -95,21 +95,14 @@ $('#ExecuteMLBtn').click(function() {
         type: 'GET',
         success: function(response) {
             Object.entries(response).forEach(([ticker, predictions]) => {
-                // Remove the suffix from the ticker name if it exists
+                // Normalize ticker name for consistency, removing potential market suffixes
                 let cleanTicker = ticker.split('.')[0];
-
-                // Check if predictions for lstm and gbm are not null before attempting to format
-                if (predictions.lstm !== null && predictions.lstm !== undefined) {
-                    $(`#lstmPrediction-${cleanTicker}`).text(predictions.lstm.toFixed(3));
-                } else {
-                    $(`#lstmPrediction-${cleanTicker}`).text('N/A');
-                }
-
-                if (predictions.gbm !== null && predictions.gbm !== undefined) {
-                    $(`#gbmPrediction-${cleanTicker}`).text(predictions.gbm.toFixed(3));
-                } else {
-                    $(`#gbmPrediction-${cleanTicker}`).text('N/A');
-                }
+                // Update fields with predictions and metrics
+                $(`#lstmPrediction-${cleanTicker}`).text(predictions.lstm.toFixed(3));
+                $(`#gbmPrediction-${cleanTicker}`).text(predictions.gbm.toFixed(3));
+                $(`#avgPrediction-${cleanTicker}`).text(predictions.avg.toFixed(3));
+                $(`#lastClose-${cleanTicker}`).text(predictions.last_close.toFixed(2));
+                $(`#pctChange-${cleanTicker}`).text(`${predictions.pct_change.toFixed(2)}%`);
             });
         },
         error: function(error) {
@@ -117,7 +110,6 @@ $('#ExecuteMLBtn').click(function() {
         }
     });
 });
-
 
 
 $('#GetPredictionsBtn').click(function() {

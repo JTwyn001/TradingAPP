@@ -8,6 +8,8 @@ import os
 import platform
 import openai
 import MetaTrader5 as mt
+from datetime import timedelta
+import datetime
 from mt5 import (market_order, get_top_10_momentum_stocks, get_top_10_momentum_forex,
                  close_order, get_exposure)
 import time
@@ -171,6 +173,32 @@ def fetch_recent_data(ticker, window_size=30):
         print(f"Error fetching data for {ticker}: {e}")
         return None
 
+def initialize_mt():
+    if not mt.initialize():
+        print("Initialize() failed, error code =", mt.last_error())
+        return False
+    return True
+
+
+def get_last_day_metrics(ticker_symbol):
+    if not mt.initialize():
+        print("Failed to initialize MT5 connection")
+        return None, None
+    symbol_info = mt.symbol_info_tick(ticker_symbol)
+    if symbol_info is None:
+        print(f"No symbol info found for {ticker_symbol}")
+        return None, None
+
+    rates = mt.copy_rates_from_pos(ticker_symbol, mt.TIMEFRAME_D1, 0, 2)
+    if rates is None or len(rates) < 2:
+        print(f"Not enough data to fetch rates for {ticker_symbol}")
+        return None, None
+
+    last_close = rates[-1]['close']
+    last_prev_close = rates[-2]['close']
+    return last_close, last_prev_close
+
+
 
 @app.route('/execute_ml_predictions', methods=['GET'])
 def execute_ml_predictions():
@@ -178,12 +206,15 @@ def execute_ml_predictions():
     combined_predictions = {}
 
     for ticker_symbol in tickers:
-        combined_predictions[ticker_symbol] = {'lstm': None, 'gbm': None}
+        combined_predictions[ticker_symbol] = {'lstm': None, 'gbm': None, 'avg': None, 'last_close': None, 'pct_change': None}
 
         try:
             # Load models and scalers
             lstm_model, lstm_feature_scaler, lstm_target_scaler = load_latest_model_and_scaler_for_ticker(ticker_symbol)
             gbm_model = load_latest_gbm_model_for_ticker(ticker_symbol)
+
+            # Fetch last day metrics
+            last_close, last_prev_close = get_last_day_metrics(ticker_symbol)  # Assuming this function exists and returns last close and the previous close
 
             # Preprocess and predict using LSTM
             if lstm_model and lstm_feature_scaler and lstm_target_scaler:
@@ -195,16 +226,27 @@ def execute_ml_predictions():
 
             # Preprocess and predict using GBM
             if gbm_model:
-                gbm_prepared_data = preprocess_data_for_gbm(ticker_symbol, None)  # Update this if scaling is needed
+                gbm_prepared_data = preprocess_data_for_gbm(ticker_symbol, None)  # No scaler used
                 if gbm_prepared_data is not None:
                     gbm_predicted_change = gbm_model.predict(gbm_prepared_data)
                     combined_predictions[ticker_symbol]['gbm'] = float(gbm_predicted_change[0])
+
+            # Calculate average prediction
+            if combined_predictions[ticker_symbol]['lstm'] is not None and combined_predictions[ticker_symbol]['gbm'] is not None:
+                combined_predictions[ticker_symbol]['avg'] = (combined_predictions[ticker_symbol]['lstm'] + combined_predictions[ticker_symbol]['gbm']) / 2
+
+            # Store last close and percentage change
+            combined_predictions[ticker_symbol]['last_close'] = last_close
+            if last_close and last_prev_close:
+                combined_predictions[ticker_symbol]['pct_change'] = ((last_close - last_prev_close) / last_prev_close) * 100
 
         except Exception as e:
             logging.error(f"Error processing {ticker_symbol}: {str(e)}")
             abort(500, description=f"Error processing {ticker_symbol}")
 
     return jsonify(combined_predictions)
+
+
 
 
 def preprocess_data_for_lstm_mt(ticker, feature_scaler):
