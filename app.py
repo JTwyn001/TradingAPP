@@ -242,6 +242,14 @@ def preprocess_data_for_lstm_mt(ticker, feature_scaler):
 
     return features_reshaped
 
+def prepare_features(features, feature_scaler):
+    if feature_scaler:
+        # Scale the features using the provided scaler and return
+        features_scaled = feature_scaler.transform(features)
+        return features_scaled
+    else:
+        # Return features as numpy array if no scaler is used
+        return features.values
 
 def preprocess_data_for_gbm(ticker, feature_scaler):
     if not mt.initialize():
@@ -249,47 +257,50 @@ def preprocess_data_for_gbm(ticker, feature_scaler):
         return None
 
     end_date = datetime.datetime.now()
-    start_date = end_date - datetime.timedelta(days=365)  # Example: last 365 days
-
+    start_date = end_date - datetime.timedelta(days=365)  # Last year
     utc_from = int(start_date.timestamp())
     utc_to = int(end_date.timestamp())
 
     rates = mt.copy_rates_range(ticker, mt.TIMEFRAME_D1, utc_from, utc_to)
     if rates is None or len(rates) == 0:
-        error_code = mt.last_error()
-        print(f"No recent data fetched for {ticker}. Error: {error_code}")
+        print(f"No recent data fetched for {ticker}. Error: {mt.last_error()}")
         return None
 
     data = pd.DataFrame(rates)
     data['time'] = pd.to_datetime(data['time'], unit='s')
     data.set_index('time', inplace=True)
 
-    # Ensure all columns are present
-    if 'volume' in data.columns:
-        data['OBV'] = ta.obv(data['close'], data['volume']).astype(float)
-    else:
-        print("Volume data not available for OBV calculation.")
-        data['OBV'] = np.nan  # Handle missing OBV or adjust your model to work without it
+    # Forward fill to handle missing data, since backward fill might introduce look-ahead bias
+    data.fillna(method='ffill', inplace=True)
+
+    # Ensure all necessary columns have no NaN values after filling
+    if data[['close', 'high', 'low']].isnull().any().any():
+        print("Missing data persists in necessary columns after filling.")
+        return None
+
+    # Compute the required indicators based on the new setup
+    compute_indicators(data)
+
+    features = data[['close', 'RSI', 'EMA20', 'MACD', 'SMA50', 'ATR']].tail(1)  # Ensure this matches the training feature set
+    if features.isnull().any().any():
+        print("Features contain NaN values after computation.")
+        return None
+
+    return prepare_features(features, feature_scaler)
 
 
-    # Ensure all indicators used during training are calculated
+def compute_indicators(data):
     data['RSI'] = ta.rsi(data['close'], length=15)
     data['EMA20'] = ta.ema(data['close'], length=20)
     data['MACD'] = ta.macd(data['close'])['MACD_12_26_9']
     data['SMA50'] = data['close'].rolling(window=50).mean()
-    data['OBV'] = ta.obv(data['close'], data['volume']).astype(float)
-    bollinger = ta.bbands(data['close'], length=20, std=2)
-    data['BOLL_Upper'] = bollinger['BBL_20_2.0']
-    data['BOLL_Lower'] = bollinger['BBU_20_2.0']
+    if 'volume' in data.columns:
+        data['OBV'] = ta.obv(data['close'], data['volume']).astype(float)
     data['ATR'] = ta.atr(data['high'], data['low'], data['close'], length=14)
-    data.dropna(inplace=True)
 
-    features = data[['close', 'RSI', 'EMA20', 'MACD', 'SMA50', 'OBV', 'BOLL_Upper', 'BOLL_Lower', 'ATR']].tail(1)
-    if feature_scaler:
-        features_scaled = feature_scaler.transform(features)
-        return features_scaled
-    else:
-        return features.values  # If no scaling was performed during training
+
+
+
 
 def load_latest_model_and_scaler_for_ticker(ticker_symbol, model_dir='./models', scaler_dir='./scalers'):
     # Adjusted to look for '.keras' files instead of '.h5'

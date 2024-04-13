@@ -90,7 +90,6 @@ $(document).ready(function() {
 });
 
 $('#ExecuteMLBtn').click(function() {
-    // Send a request to the backend to execute ML predictions
     $.ajax({
         url: '/execute_ml_predictions',
         type: 'GET',
@@ -98,9 +97,19 @@ $('#ExecuteMLBtn').click(function() {
             Object.entries(response).forEach(([ticker, predictions]) => {
                 // Remove the suffix from the ticker name if it exists
                 let cleanTicker = ticker.split('.')[0];
-                // Update LSTM and GBM predictions on the page
-                $(`#lstmPrediction-${cleanTicker}`).text(predictions.lstm.toFixed(3)); // Adjust decimal places as needed
-                $(`#gbmPrediction-${cleanTicker}`).text(predictions.gbm.toFixed(3)); // Adjust decimal places as needed
+
+                // Check if predictions for lstm and gbm are not null before attempting to format
+                if (predictions.lstm !== null && predictions.lstm !== undefined) {
+                    $(`#lstmPrediction-${cleanTicker}`).text(predictions.lstm.toFixed(3));
+                } else {
+                    $(`#lstmPrediction-${cleanTicker}`).text('N/A');
+                }
+
+                if (predictions.gbm !== null && predictions.gbm !== undefined) {
+                    $(`#gbmPrediction-${cleanTicker}`).text(predictions.gbm.toFixed(3));
+                } else {
+                    $(`#gbmPrediction-${cleanTicker}`).text('N/A');
+                }
             });
         },
         error: function(error) {
@@ -108,6 +117,7 @@ $('#ExecuteMLBtn').click(function() {
         }
     });
 });
+
 
 
 $('#GetPredictionsBtn').click(function() {

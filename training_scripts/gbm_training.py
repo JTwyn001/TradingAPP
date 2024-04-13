@@ -23,7 +23,7 @@ param_grid = {
 
 
 def download_and_preprocess_data(ticker, start_date='2010-01-01', end_date='2024-04-01'):
-    data = yf.download(tickers='SEKJPY=X', start=start_date, end=end_date)
+    data = yf.download(tickers='MU', start=start_date, end=end_date)
 
     # RSI
     data['RSI'] = ta.rsi(data['Close'], length=15)
@@ -33,30 +33,21 @@ def download_and_preprocess_data(ticker, start_date='2010-01-01', end_date='2024
 
     # Moving Average Convergence Divergence
     macd = ta.macd(data['Close'])  # This returns a DataFrame
-    data['MACD'] = macd['MACD_12_26_9']  # Make sure to use the correct column name
+    data['MACD'] = macd['MACD_12_26_9']
 
     # Simple Moving Average
     data['SMA50'] = data['Close'].rolling(window=50).mean()
 
-    # On-balance Volume
-    data['OBV'] = ta.obv(data['Close'], data['Volume'])
-
-    # Bollinger Bands
-    bollinger_bands = ta.bbands(data['Close'], length=20, std=2)  # Adjust parameters as needed
-    data['BOLL_Upper'] = bollinger_bands['BBL_20_2.0']  # Upper Bollinger Band
-    data['BOLL_Lower'] = bollinger_bands['BBU_20_2.0']  # Lower Bollinger Band
-    data['BOLL_Middle'] = bollinger_bands['BBM_20_2.0']  # Middle Bollinger Band (20-period SMA)
-
     # Average True Range
-    data['ATR'] = ta.atr(data['High'], data['Low'], data['Close'], length=14)  # Length of 14 is typical
+    data['ATR'] = ta.atr(data['High'], data['Low'], data['Close'], length=14)
 
     # Target variable for prediction
     data['TargetNextClose'] = data['Close'].shift(-1)
 
     data.dropna(inplace=True)
 
-    return data[['Close', 'RSI', 'EMA20', 'MACD', 'SMA50', 'OBV', 'BOLL_Upper', 'BOLL_Lower', 'BOLL_Middle', 'ATR']], \
-    data['TargetNextClose']
+    return data[['Close', 'RSI', 'EMA20', 'MACD', 'SMA50', 'ATR']], data['TargetNextClose']
+
 
 
 def train_gbm(features, target):
@@ -82,7 +73,7 @@ def plot_prediction(y_test, y_pred, title='GBM Predicted vs Actual'):
 
 
 def main():
-    ticker = 'SEKJPY'
+    ticker = 'MU.NAS'
     features, target = download_and_preprocess_data(ticker)
     # Split the data
     X_train, X_test, y_train, y_test = train_test_split(features, target, test_size=0.2, random_state=42)
@@ -110,7 +101,7 @@ def main():
     plot_prediction(y_test, y_pred)
 
     # Save the best model
-    model_directory = './gbm_models'
+    model_directory = 'C:/Users/tohye/Documents/Capstone/TradingAPP/gbm_models'
     os.makedirs(model_directory, exist_ok=True)
     model_filename = f'gbm_model_{ticker}_{datetime.datetime.now().strftime("%Y%m%d_%H%M%S")}.joblib'
     joblib.dump(best_model, os.path.join(model_directory, model_filename))
