@@ -89,27 +89,61 @@ $(document).ready(function() {
     updateChartAndButtonText("Choose Forex Instrument", "BTCUSD");
 });
 
+function calculateVolume(price, dollarAllocation) {
+    console.log(`Calculating volume with price: ${price}, dollarAllocation: ${dollarAllocation}`);
+    if (price <= 0 || isNaN(price)) {
+        console.error('Invalid price detected:', price);
+        return 0;  // Default to 0 or an appropriate error handling
+    }
+    let volume = dollarAllocation / price;
+    console.log(`Raw volume calculated: ${volume}`);
+    return volume >= 0.01 ? volume.toFixed(2) : 0.01; // Ensure a minimum trading volume of 0.01
+}
+
+
 $('#ExecuteMLBtn').click(function() {
     $.ajax({
         url: '/execute_ml_predictions',
         type: 'GET',
         success: function(response) {
+            let totalCapital = parseFloat($('#capitalSlider').val());
+            console.log('Total capital:', totalCapital);
+            let totalPercentageChange = 0;
+            let allocations = {};
+            let newPctChanges = {};
+            let dollarAllocations = {};
+
             Object.entries(response).forEach(([ticker, predictions]) => {
-                // Normalize ticker name for consistency, removing potential market suffixes
+                let recalculatedPctChange = ((predictions.avg - predictions.last_close) / predictions.last_close) * 100;
+                newPctChanges[ticker] = recalculatedPctChange;
+                totalPercentageChange += Math.exp(Math.abs(recalculatedPctChange));
+            });
+
+            Object.entries(response).forEach(([ticker, predictions]) => {
+                let absPctChange = Math.abs(newPctChanges[ticker]);
+                let weight = Math.exp(absPctChange) / totalPercentageChange;
+                allocations[ticker] = weight * 100;
+                dollarAllocations[ticker] = (weight * totalCapital).toFixed(2);
+                let price = parseFloat(predictions.current_price);
+                let volume = calculateVolume(price, dollarAllocations[ticker]);
+
                 let cleanTicker = ticker.split('.')[0];
-                // Update fields with predictions and metrics
-                $(`#lstmPrediction-${cleanTicker}`).text(predictions.lstm.toFixed(3));
-                $(`#gbmPrediction-${cleanTicker}`).text(predictions.gbm.toFixed(3));
-                $(`#avgPrediction-${cleanTicker}`).text(predictions.avg.toFixed(3));
-                $(`#lastClose-${cleanTicker}`).text(predictions.last_close.toFixed(2));
-                $(`#pctChange-${cleanTicker}`).text(`${predictions.pct_change.toFixed(2)}%`);
+                $(`#lstmPrediction-${cleanTicker}`).text(predictions.lstm ? predictions.lstm.toFixed(3) : 'N/A');
+                $(`#gbmPrediction-${cleanTicker}`).text(predictions.gbm ? predictions.gbm.toFixed(3) : 'N/A');
+                $(`#avgPrediction-${cleanTicker}`).text(predictions.avg ? predictions.avg.toFixed(3) : 'N/A');
+                $(`#lastClose-${cleanTicker}`).text(predictions.last_close ? predictions.last_close.toFixed(2) : 'N/A');
+                $(`#pctChange-${cleanTicker}`).text(newPctChanges[ticker] ? newPctChanges[ticker].toFixed(2) + '%' : 'N/A');
+                $(`#allocation-${cleanTicker}`).text(allocations[ticker] ? allocations[ticker].toFixed(2) + '%' : 'N/A');
+                $(`#dollarAllocation-${cleanTicker}`).text('$' + dollarAllocations[ticker]);
+                $(`#volume-${cleanTicker}`).text(volume);
             });
         },
-        error: function(error) {
-            console.log('Error executing ML predictions:', error);
+        error: function(xhr, status, error) {
+            console.error('Error executing ML predictions:', error);
         }
     });
 });
+
 
 
 $('#GetPredictionsBtn').click(function() {

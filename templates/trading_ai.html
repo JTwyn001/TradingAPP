@@ -120,6 +120,9 @@
                             <th scope="col">Average</th>
                             <th scope="col">Last Day Price</th>
                             <th scope="col">% Change</th>
+                            <th scope="col">Allocation</th>
+                            <th scope="col">Dollar Allocation</th>
+                            <th scope="col">Volume</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -130,6 +133,9 @@
                             <td><span id="avgPrediction-EURUSD">0.00</span></td>
                             <td><span id="lastClose-EURUSD">0.00</span></td>
                             <td><span id="pctChange-EURUSD">0.00%</span></td>
+                            <td><span id="allocation-EURUSD">0.00%</span></td>
+                            <td><span id="dollarAllocation-EURUSD">0.00</span></td>
+                            <td><span id="volume-EURUSD"></span></td>
                         </tr>
                         <tr>
                             <td>SEKJPY</td>
@@ -138,6 +144,9 @@
                             <td><span id="avgPrediction-SEKJPY">0.00</span></td>
                             <td><span id="lastClose-SEKJPY">0.00</span></td>
                             <td><span id="pctChange-SEKJPY">0.00%</span></td>
+                            <td><span id="allocation-SEKJPY">0.00%</span></td>
+                            <td><span id="dollarAllocation-SEKJPY">0.00</span></td>
+                            <td><span id="volume-SEKJPY"></span></td>
                         </tr>
                         <tr>
                             <td>EURNOK</td>
@@ -146,6 +155,9 @@
                             <td><span id="avgPrediction-EURNOK">0.00</span></td>
                             <td><span id="lastClose-EURNOK">0.00</span></td>
                             <td><span id="pctChange-EURNOK">0.00%</span></td>
+                            <td><span id="allocation-EURNOK">0.00%</span></td>
+                            <td><span id="dollarAllocation-EURNOK">0.00</span></td>
+                            <td><span id="volume-EURNOK"></span></td>
                         </tr>
                         <tr>
                             <td>MU</td>
@@ -154,6 +166,9 @@
                             <td><span id="avgPrediction-MU">0.00</span></td>
                             <td><span id="lastClose-MU">0.00</span></td>
                             <td><span id="pctChange-MU">0.00%</span></td>
+                            <td><span id="allocation-MU">0.00%</span></td>
+                            <td><span id="dollarAllocation-MU">0.00</span></td>
+                            <td><span id="volume-MU"></span></td>
                         </tr>
                         <tr>
                             <td>NRG</td>
@@ -162,6 +177,9 @@
                             <td><span id="avgPrediction-NRG">0.00</span></td>
                             <td><span id="lastClose-NRG">0.00</span></td>
                             <td><span id="pctChange-NRG">0.00%</span></td>
+                            <td><span id="allocation-NRG">0.00%</span></td>
+                            <td><span id="dollarAllocation-NRG">0.00</span></td>
+                            <td><span id="volume-NRG"></span></td>
                         </tr>
                         </tbody>
                     </table>
@@ -177,6 +195,11 @@
             <div class="my-2">
                 <label for="stoplossSlider" class="form-label" style="color: white;">Trailing Stop-Loss : <span id="stoplossSliderValue">0%</span></label>
                 <input type="range" class="form-range" id="stoplossSlider" min="0" max="20" value="0" oninput="stoplossSliderValue.textContent = this.value + '%'" style="color: white;">
+            </div>
+
+            <div class="my-2">
+                <label for="capitalSlider" class="form-label" style="color: white;">Capital Risk: <span id="capitalSliderValue">50,000</span></label>
+                <input type="range" class="form-range" id="capitalSlider" min="50000" max="500000" value="50000" step="5000" oninput="capitalSliderValue.textContent = this.value">
             </div>
 
             <!-- New div container for TRADE STOCK button with custom class for styling -->

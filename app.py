@@ -76,6 +76,20 @@ def trading_ai_forex():
     return render_template('trading_ai.html', top_10_forex=top_10_forex)
 
 
+def get_current_price(ticker):
+    price = mt.symbol_info_tick(ticker).ask  # or use .bid, depending on your buying strategy
+    return price
+
+
+@app.route('/get_current_price/<symbol>')
+def get_current_price_route(symbol):
+    price = get_current_price(symbol)  # Your existing function to fetch the price
+    if price:
+        return jsonify({'current_price': price})
+    else:
+        return jsonify({'error': 'Price not found'}), 404
+
+
 @app.route('/get_data/<symbol>')
 def get_data(symbol):
     try:
@@ -199,14 +213,21 @@ def get_last_day_metrics(ticker_symbol):
     return last_close, last_prev_close
 
 
-
 @app.route('/execute_ml_predictions', methods=['GET'])
 def execute_ml_predictions():
     tickers = ['EURUSD', 'SEKJPY', 'EURNOK', 'MU.NAS', 'NRG.NYSE']
     combined_predictions = {}
 
     for ticker_symbol in tickers:
-        combined_predictions[ticker_symbol] = {'lstm': None, 'gbm': None, 'avg': None, 'last_close': None, 'pct_change': None}
+        price = get_current_price(ticker_symbol)  # Make sure this function returns the current price
+        combined_predictions[ticker_symbol] = {
+            'lstm': None,
+            'gbm': None,
+            'avg': None,
+            'last_close': None,
+            'pct_change': None,
+            'current_price': price  # Add current price to the data sent to the frontend
+        }
 
         try:
             # Load models and scalers
@@ -214,14 +235,16 @@ def execute_ml_predictions():
             gbm_model = load_latest_gbm_model_for_ticker(ticker_symbol)
 
             # Fetch last day metrics
-            last_close, last_prev_close = get_last_day_metrics(ticker_symbol)  # Assuming this function exists and returns last close and the previous close
+            last_close, last_prev_close = get_last_day_metrics(
+                ticker_symbol)  # Assuming this function exists and returns last close and the previous close
 
             # Preprocess and predict using LSTM
             if lstm_model and lstm_feature_scaler and lstm_target_scaler:
                 lstm_prepared_data = preprocess_data_for_lstm_mt(ticker_symbol, lstm_feature_scaler)
                 if lstm_prepared_data is not None:
                     lstm_predicted_change_scaled = lstm_model.predict(lstm_prepared_data)
-                    lstm_predicted_change = lstm_target_scaler.inverse_transform(lstm_predicted_change_scaled.reshape(-1, 1))[0][0]
+                    lstm_predicted_change = \
+                    lstm_target_scaler.inverse_transform(lstm_predicted_change_scaled.reshape(-1, 1))[0][0]
                     combined_predictions[ticker_symbol]['lstm'] = float(lstm_predicted_change)
 
             # Preprocess and predict using GBM
@@ -232,21 +255,22 @@ def execute_ml_predictions():
                     combined_predictions[ticker_symbol]['gbm'] = float(gbm_predicted_change[0])
 
             # Calculate average prediction
-            if combined_predictions[ticker_symbol]['lstm'] is not None and combined_predictions[ticker_symbol]['gbm'] is not None:
-                combined_predictions[ticker_symbol]['avg'] = (combined_predictions[ticker_symbol]['lstm'] + combined_predictions[ticker_symbol]['gbm']) / 2
+            if combined_predictions[ticker_symbol]['lstm'] is not None and combined_predictions[ticker_symbol][
+                'gbm'] is not None:
+                combined_predictions[ticker_symbol]['avg'] = (combined_predictions[ticker_symbol]['lstm'] +
+                                                              combined_predictions[ticker_symbol]['gbm']) / 2
 
             # Store last close and percentage change
             combined_predictions[ticker_symbol]['last_close'] = last_close
             if last_close and last_prev_close:
-                combined_predictions[ticker_symbol]['pct_change'] = ((last_close - last_prev_close) / last_prev_close) * 100
+                combined_predictions[ticker_symbol]['pct_change'] = ((
+                                                                                 last_close - last_prev_close) / last_prev_close) * 100
 
         except Exception as e:
             logging.error(f"Error processing {ticker_symbol}: {str(e)}")
             abort(500, description=f"Error processing {ticker_symbol}")
 
     return jsonify(combined_predictions)
-
-
 
 
 def preprocess_data_for_lstm_mt(ticker, feature_scaler):
@@ -284,6 +308,7 @@ def preprocess_data_for_lstm_mt(ticker, feature_scaler):
 
     return features_reshaped
 
+
 def prepare_features(features, feature_scaler):
     if feature_scaler:
         # Scale the features using the provided scaler and return
@@ -292,6 +317,7 @@ def prepare_features(features, feature_scaler):
     else:
         # Return features as numpy array if no scaler is used
         return features.values
+
 
 def preprocess_data_for_gbm(ticker, feature_scaler):
     if not mt.initialize():
@@ -323,7 +349,8 @@ def preprocess_data_for_gbm(ticker, feature_scaler):
     # Compute the required indicators based on the new setup
     compute_indicators(data)
 
-    features = data[['close', 'RSI', 'EMA20', 'MACD', 'SMA50', 'ATR']].tail(1)  # Ensure this matches the training feature set
+    features = data[['close', 'RSI', 'EMA20', 'MACD', 'SMA50', 'ATR']].tail(
+        1)  # Ensure this matches the training feature set
     if features.isnull().any().any():
         print("Features contain NaN values after computation.")
         return None
@@ -339,9 +366,6 @@ def compute_indicators(data):
     if 'volume' in data.columns:
         data['OBV'] = ta.obv(data['close'], data['volume']).astype(float)
     data['ATR'] = ta.atr(data['high'], data['low'], data['close'], length=14)
-
-
-
 
 
 def load_latest_model_and_scaler_for_ticker(ticker_symbol, model_dir='./models', scaler_dir='./scalers'):
@@ -368,7 +392,8 @@ def load_latest_model_and_scaler_for_ticker(ticker_symbol, model_dir='./models',
 
 def load_latest_gbm_model_for_ticker(ticker_symbol, model_dir='./gbm_models'):
     # Look for joblib files specific to the GBM models
-    model_files = [os.path.join(model_dir, f) for f in os.listdir(model_dir) if f.endswith('.joblib') and ticker_symbol in f]
+    model_files = [os.path.join(model_dir, f) for f in os.listdir(model_dir) if
+                   f.endswith('.joblib') and ticker_symbol in f]
 
     # Ensure there are files before using max to avoid ValueError
     latest_model_file = max(model_files, key=os.path.getctime) if model_files else None
@@ -378,7 +403,6 @@ def load_latest_gbm_model_for_ticker(ticker_symbol, model_dir='./gbm_models'):
 
     # Return the model (No feature_scaler is used here, based on your GBM setup)
     return model
-
 
 
 # Function to load the latest model and scaler
