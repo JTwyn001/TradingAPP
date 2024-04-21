@@ -100,6 +100,7 @@ function calculateVolume(price, dollarAllocation) {
     return volume >= 0.01 ? volume.toFixed(2) : 0.01; // Ensure a minimum trading volume of 0.01
 }
 
+let tradingData = {};  // Global object to store trading data
 
 $('#ExecuteMLBtn').click(function() {
     $.ajax({
@@ -123,11 +124,19 @@ $('#ExecuteMLBtn').click(function() {
                 let absPctChange = Math.abs(newPctChanges[ticker]);
                 let weight = Math.exp(absPctChange) / totalPercentageChange;
                 allocations[ticker] = weight * 100;
-                dollarAllocations[ticker] = (weight * totalCapital).toFixed(2);
+                let dollarAmount = weight * totalCapital;
+                dollarAllocations[ticker] = dollarAmount.toFixed(2);
                 let price = parseFloat(predictions.current_price);
-                let volume = calculateVolume(price, dollarAllocations[ticker]);
+                let volume = calculateVolume(price, dollarAmount);
 
                 let cleanTicker = ticker.split('.')[0];
+                $(`#volume-${cleanTicker}`).text(volume);
+                // Save trading data
+                tradingData[ticker] = {
+                    symbol: ticker,
+                    volume: volume,
+                    direction: newPctChanges[ticker] >= 0 ? 'buy' : 'sell'
+                };
                 $(`#lstmPrediction-${cleanTicker}`).text(predictions.lstm ? predictions.lstm.toFixed(3) : 'N/A');
                 $(`#gbmPrediction-${cleanTicker}`).text(predictions.gbm ? predictions.gbm.toFixed(3) : 'N/A');
                 $(`#avgPrediction-${cleanTicker}`).text(predictions.avg ? predictions.avg.toFixed(3) : 'N/A');
@@ -135,8 +144,9 @@ $('#ExecuteMLBtn').click(function() {
                 $(`#pctChange-${cleanTicker}`).text(newPctChanges[ticker] ? newPctChanges[ticker].toFixed(2) + '%' : 'N/A');
                 $(`#allocation-${cleanTicker}`).text(allocations[ticker] ? allocations[ticker].toFixed(2) + '%' : 'N/A');
                 $(`#dollarAllocation-${cleanTicker}`).text('$' + dollarAllocations[ticker]);
-                $(`#volume-${cleanTicker}`).text(volume);
+
             });
+            $('#TradeStockBtn').prop('disabled', false); // Enable trade button after data is loaded
         },
         error: function(xhr, status, error) {
             console.error('Error executing ML predictions:', error);
@@ -208,20 +218,6 @@ document.getElementById('AccountBtn').addEventListener('click', function() {
 
 let predictionData = {};
 
-// Function to fetch predictions
-function fetchPredictions(selectedStocks) {
-    return fetch('/get_trade_predictions', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ selectedStocks: selectedStocks }),
-    })
-        .then(response => response.json())
-        .catch((error) => {
-            console.error('Error fetching predictions:', error);
-        });
-}
 
 // Function to execute trades
 function executeTrades() {
@@ -264,21 +260,36 @@ function getSelectedForex() {
 }
 
 
-// Function to handle Trade Stock button click
-function handleTradeStockClick() {
-    const selectedStocks = getSelectedStocks();  // Implement this function to get the selected stocks from your UI
+$('#TradeStockBtn').click(function() {
+    console.log('Trade button clicked');
+    let trades = Object.values(tradingData); // Convert stored data into an array for sending
+    if (trades.length === 0) {
+        console.error('No trade data to send');
+        alert('No trade data to send. Ensure ML predictions have been executed and table is populated.');
+        return;
+    }
 
-    fetchPredictions(selectedStocks).then(predictions => {
-        console.log('Sending prediction data:', predictionData);
-        predictionData = predictions;  // Store the fetched predictions
-        executeTrades().then(tradeResponse => {
-            console.log('Trade Execution Response:', tradeResponse);  // Log or handle the trade execution response
-        });
+    console.log('Number of trades to send:', trades.length);
+    console.log('Sending trades to server...', trades);
+
+    $.ajax({
+        url: '/trade_stocks',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(trades),
+
+        success: function(response) {
+            console.log('Trade execution response:', response);
+            alert("Trades have been executed successfully!");
+        },
+        error: function(xhr, status, error) {
+            console.error('Error executing trades:', error);
+            console.error('Response:', xhr.responseText);
+            alert('Failed to execute trades: ' + xhr.responseText);
+        }
     });
-}
+});
 
-// Add event listener to the Trade Stock button
-document.getElementById('TradeStockBtn').addEventListener('click', handleTradeStockClick);
 
 function updateAccountInfo() {
     fetch('/get_account_info')

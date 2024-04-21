@@ -187,6 +187,7 @@ def fetch_recent_data(ticker, window_size=30):
         print(f"Error fetching data for {ticker}: {e}")
         return None
 
+
 def initialize_mt():
     if not mt.initialize():
         print("Initialize() failed, error code =", mt.last_error())
@@ -244,7 +245,7 @@ def execute_ml_predictions():
                 if lstm_prepared_data is not None:
                     lstm_predicted_change_scaled = lstm_model.predict(lstm_prepared_data)
                     lstm_predicted_change = \
-                    lstm_target_scaler.inverse_transform(lstm_predicted_change_scaled.reshape(-1, 1))[0][0]
+                        lstm_target_scaler.inverse_transform(lstm_predicted_change_scaled.reshape(-1, 1))[0][0]
                     combined_predictions[ticker_symbol]['lstm'] = float(lstm_predicted_change)
 
             # Preprocess and predict using GBM
@@ -264,7 +265,7 @@ def execute_ml_predictions():
             combined_predictions[ticker_symbol]['last_close'] = last_close
             if last_close and last_prev_close:
                 combined_predictions[ticker_symbol]['pct_change'] = ((
-                                                                                 last_close - last_prev_close) / last_prev_close) * 100
+                                                                             last_close - last_prev_close) / last_prev_close) * 100
 
         except Exception as e:
             logging.error(f"Error processing {ticker_symbol}: {str(e)}")
@@ -527,32 +528,51 @@ def get_predictions():
     return jsonify(sorted_predictions)
 
 
-@app.route('/get_trade_predictions', methods=['POST'])
-def get_trade_predictions():
-    # Extract the selected stocks from the request
-    selected_stocks = request.json['selectedStocks']
+@app.route('/trade_stocks', methods=['POST'])
+def trade_stocks():
+    data = request.get_json()
+    print("Raw data received:", data)
+    if not data:
+        print("No data received")
+        return jsonify({'status': 'error', 'message': 'No data received'}), 400
+    print("Received trade data:", data)  # This will log the received data
+    results = {}
+    for trade in data:
+        symbol = trade['symbol']
+        volume = trade['volume']
+        direction = trade['direction']  # 'buy' or 'sell'
+        # Execute the market order
+        result = market_order(symbol, volume, direction, 10, 123456, 0, 0)
+        results[symbol] = result._asdict() if result else {'error': 'Order failed'}
 
-    # Load the latest model and scaler dynamically
-    model, feature_scaler, target_scaler = load_latest_model_and_scaler()
+    return jsonify(results)
 
-    trade_predictions = {}
-    for ticker in selected_stocks:
-        try:
-            # Ensure that preprocess_data_for_lstm is fetching and preparing MT5 data correctly
-            prepared_data = preprocess_data_for_lstm(ticker, feature_scaler)
-            if prepared_data is not None:
-                predicted_change_scaled = model.predict(prepared_data)
-                predicted_change = target_scaler.inverse_transform(predicted_change_scaled.reshape(-1, 1))[0][0]
-                trade_predictions[ticker] = float(predicted_change)
-            else:
-                print(f"Insufficient or unavailable data for {ticker}. Skipping...")
-        except Exception as e:
-            print(f"Exception processing {ticker}: {e}")
-            # Instead of returning an error string, consider returning a default value or omitting the ticker
-            trade_predictions[ticker] = 0  # Default value or use `None` and handle it on the frontend
+def market_order(symbol, volume, order_type, deviation, magic, stoploss, takeprofit):
+    mt.initialize()
+    if not mt.symbol_select(symbol, True):
+        return {'status': 'error', 'message': 'Symbol not found or market closed'}
 
-    return jsonify(trade_predictions)
+    tick = mt.symbol_info_tick(symbol)
+    if tick is None:
+        return {'status': 'error', 'message': 'No tick data available'}
 
+    price = tick.ask if order_type == 'buy' else tick.bid
+    request = {
+        "action": mt.TRADE_ACTION_DEAL,
+        "symbol": symbol,
+        "volume": volume,
+        "type": mt.ORDER_TYPE_BUY if order_type == 'buy' else mt.ORDER_TYPE_SELL,
+        "price": price,
+        "deviation": deviation,
+        "magic": magic,
+        "sl": stoploss,
+        "tp": takeprofit,
+        "comment": "Executed via Flask",
+        "type_time": mt.ORDER_TIME_GTC,
+        "type_filling": mt.ORDER_FILLING_IOC,
+    }
+    result = mt.order_send(request)
+    return result
 
 def allocate_funds(total_funds, prediction_values):
     # Filter out non-numeric and None values from prediction_values
