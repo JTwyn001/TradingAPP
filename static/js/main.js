@@ -277,14 +277,18 @@ $('#TradeStockBtn').click(function() {
         type: 'POST',
         contentType: 'application/json',
         data: JSON.stringify(trades),
-
         success: function(response) {
+            let errors = Object.values(response).filter(trade => trade.status === 'error');
+            if (errors.length > 0) {
+                alert("Some trades failed to execute: " + JSON.stringify(errors));
+            } else {
+                alert("Trades have been executed successfully!");
+            }
             console.log('Trade execution response:', response);
-            alert("Trades have been executed successfully!");
+
         },
         error: function(xhr, status, error) {
             console.error('Error executing trades:', error);
-            console.error('Response:', xhr.responseText);
             alert('Failed to execute trades: ' + xhr.responseText);
         }
     });

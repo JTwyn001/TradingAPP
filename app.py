@@ -35,6 +35,8 @@ from keras.layers import Dense, Dropout, LSTM, Input, Activation, concatenate
 from tensorflow.keras.models import load_model
 import joblib
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
 mt.initialize()
 
 if not mt.initialize():
@@ -527,28 +529,50 @@ def get_predictions():
 
     return jsonify(sorted_predictions)
 
+def check_existing_positions(symbol):
+    """Checks if there are open positions for a given symbol."""
+    positions = mt.positions_get(symbol=symbol)
+    return len(positions) > 0
 
 @app.route('/trade_stocks', methods=['POST'])
 def trade_stocks():
     data = request.get_json()
     print("Raw data received:", data)
     if not data:
+        logging.error("No data received for trading stocks.")
         print("No data received")
         return jsonify({'status': 'error', 'message': 'No data received'}), 400
+    logging.info(f"Raw data received for trading: {data}")
     print("Received trade data:", data)  # This will log the received data
     results = {}
     for trade in data:
-        symbol = trade['symbol']
-        volume = trade['volume']
-        direction = trade['direction']  # 'buy' or 'sell'
+        symbol = trade.get('symbol')
+        volume = float(trade.get('volume', 0))
+        direction = trade.get('direction')  # 'buy' or 'sell'
+        # Assume defaults for deviation, magic, sl, and tp if not provided in trade data
+        deviation = trade.get('deviation', 10)
+        magic = trade.get('magic', 123456)
+        stoploss = trade.get('sl', 0)  # Set appropriate default or handle it in the market_order function
+        takeprofit = trade.get('tp', 0)
+        # Check if there are any open positions for this symbol
+        if check_existing_positions(symbol):
+            results[symbol] = {'status': 'error', 'message': 'Open positions exist, skipping trade'}
+            logging.info(f"Skipping trade for {symbol} as open positions exist.")
+            continue  # Skip to the next trade if open positions exist
+
         # Execute the market order
-        result = market_order(symbol, volume, direction, 10, 123456, 0, 0)
-        results[symbol] = result._asdict() if result else {'error': 'Order failed'}
+        result = market_order(symbol, volume, direction, deviation, magic, stoploss, takeprofit)
+        if result.get('status') == 'error':
+            logging.error(f"Trade failed for {symbol}: {result['message']}")
+        results[symbol] = result
 
     return jsonify(results)
 
+
 def market_order(symbol, volume, order_type, deviation, magic, stoploss, takeprofit):
-    mt.initialize()
+    if not mt.initialize():
+        return {'status': 'error', 'message': 'Failed to initialize MetaTrader'}
+
     if not mt.symbol_select(symbol, True):
         return {'status': 'error', 'message': 'Symbol not found or market closed'}
 
@@ -560,19 +584,62 @@ def market_order(symbol, volume, order_type, deviation, magic, stoploss, takepro
     request = {
         "action": mt.TRADE_ACTION_DEAL,
         "symbol": symbol,
-        "volume": volume,
+        "volume": float(volume),
         "type": mt.ORDER_TYPE_BUY if order_type == 'buy' else mt.ORDER_TYPE_SELL,
         "price": price,
         "deviation": deviation,
         "magic": magic,
-        "sl": stoploss,
-        "tp": takeprofit,
         "comment": "Executed via Flask",
         "type_time": mt.ORDER_TIME_GTC,
         "type_filling": mt.ORDER_FILLING_IOC,
     }
+    if stoploss > 0:
+        request['sl'] = stoploss
+    if takeprofit > 0:
+        request['tp'] = takeprofit
     result = mt.order_send(request)
-    return result
+    if result is None or result.retcode != mt.TRADE_RETCODE_DONE:
+        last_error = mt.last_error()
+        error_message = f"Trade failed with error code {last_error[0]}: {last_error[1]}" if result is None else f"Trade failed with retcode: {result.retcode}"
+        return {'status': 'error', 'message': error_message}
+
+    # If result is a namedtuple and contains the '_asdict' method, convert it to a dict
+    return result._asdict() if hasattr(result, '_asdict') else result
+
+
+def close_order(ticket):
+    """Closes a trade based on its ticket ID."""
+    position = mt.position_get(ticket=ticket)
+    if not position:
+        logging.error(f"No position found with ticket {ticket}")
+        return {'status': 'error', 'message': 'Position not found'}
+
+    # Determine the type of order needed to close the position
+    if position.type == mt.ORDER_TYPE_BUY:
+        order_type = mt.ORDER_TYPE_SELL
+        price = mt.symbol_info_tick(position.symbol).bid
+    else:
+        order_type = mt.ORDER_TYPE_BUY
+        price = mt.symbol_info_tick(position.symbol).ask
+
+    close_request = {
+        "action": mt.TRADE_ACTION_DEAL,
+        "position": ticket,
+        "type": order_type,
+        "volume": position.volume,
+        "price": price,
+        "deviation": 10,  # Set a suitable deviation value
+        "comment": "Closing position"
+    }
+
+    result = mt.order_send(close_request)
+    if result is None or result.retcode != mt.TRADE_RETCODE_DONE:
+        error_message = f"Failed to close position {ticket}: {mt.last_error()}"
+        logging.error(error_message)
+        return {'status': 'error', 'message': error_message}
+
+    return result._asdict() if hasattr(result, '_asdict') else result
+
 
 def allocate_funds(total_funds, prediction_values):
     # Filter out non-numeric and None values from prediction_values

@@ -62,14 +62,16 @@
 
                         <div class="login-container">
                             <div class="login-input">
-                                <label for="chatbox" class="text-light">Username</label>
-                                <input type="text" class="input-field" name="chatbox" id="chatbox" placeholder="Enter Username">
-                                <!--                                <input type="text" id="username" name="username" placeholder="Enter username">-->
+                                <label for="usernamelogin" class="text-light">Username</label>
+                                <input type="text" class="input-field" name="usernamelogin" id="usernamelogin" placeholder="Enter Username">
+                            </div>
+                            <div class="login-input">
+                                <label for="serverlogin" class="text-light">Server</label>
+                                <input type="text" class="input-field" name="serverLogin" id="serverlogin" placeholder="Enter Server">
                             </div>
                             <div class="login-input">
                                 <label for="password" class="text-light">Password</label>
                                 <input type="password" class="input-field" name="password" id="password" placeholder="Enter Password">
-                                <!--                                <input type="password" id="password" name="password" placeholder="Enter password">-->
                             </div>
                             <a href="{{ url_for('trading_ai') }}">
                                 <button id="LoginBtn" class="glow-on-hover login-button">LOGIN TO TRADING AI</button>
