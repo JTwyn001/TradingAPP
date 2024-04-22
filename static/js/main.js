@@ -95,7 +95,7 @@ function calculateVolume(price, dollarAllocation) {
         console.error('Invalid price detected:', price);
         return 0;  // Default to 0 or an appropriate error handling
     }
-    let volume = dollarAllocation / price;
+    let volume = dollarAllocation / price * 0.001;
     console.log(`Raw volume calculated: ${volume}`);
     return volume >= 0.01 ? volume.toFixed(2) : 0.01; // Ensure a minimum trading volume of 0.01
 }
