@@ -89,64 +89,87 @@ $(document).ready(function() {
     updateChartAndButtonText("Choose Forex Instrument", "BTCUSD");
 });
 
-function calculateVolume(price, dollarAllocation) {
-    console.log(`Calculating volume with price: ${price}, dollarAllocation: ${dollarAllocation}`);
+function calculateVolume(ticker, price, dollarAllocation) {
+    console.log(`Calculating volume for ${ticker} with price: ${price}, dollarAllocation: ${dollarAllocation}`);
     if (price <= 0 || isNaN(price)) {
         console.error('Invalid price detected:', price);
         return 0;  // Default to 0 or an appropriate error handling
     }
-    let volume = dollarAllocation / price * 0.001;
-    console.log(`Raw volume calculated: ${volume}`);
-    return volume >= 0.01 ? volume.toFixed(2) : 0.01; // Ensure a minimum trading volume of 0.01
+
+    // Determine volume based on ticker type
+    let volume = 0;
+    if (ticker.endsWith('.NAS') || ticker.endsWith('.NYSE')) {
+        // For stocks, where 0.1 volume = price/10
+        volume = (dollarAllocation / (price / 10)) * 0.1;
+    } else if (['SEKJPY', 'EURNOK', 'EURUSD'].includes(ticker)) {
+        // For forex pairs, where 0.01 minimum and = price x 1000
+        volume = (dollarAllocation * 1000) / price;
+    }
+
+    // Adjust volume to meet minimums
+    let minimumVolume = ticker.endsWith('.NAS') || ticker.endsWith('.NYSE') ? 0.1 : 0.01;
+    volume = Math.max(volume, minimumVolume);
+    volume = volume.toFixed(2); // Adjust decimal places as necessary
+    console.log(`Adjusted volume calculated: ${volume}`);
+    return volume;
 }
 
 let tradingData = {};  // Global object to store trading data
-
 $('#ExecuteMLBtn').click(function() {
     $.ajax({
         url: '/execute_ml_predictions',
         type: 'GET',
         success: function(response) {
             let totalCapital = parseFloat($('#capitalSlider').val());
-            console.log('Total capital:', totalCapital);
-            let totalPercentageChange = 0;
+            let maxAllocationPerTicker = totalCapital * 0.4; // 40% cap
+            let weights = {};
             let allocations = {};
-            let newPctChanges = {};
-            let dollarAllocations = {};
+            let excessCapital = 0;
+            let totalWeightForUncapped = 0;
+            let sumOfWeights = 0;
 
+            // Calculate weights and initial allocations
             Object.entries(response).forEach(([ticker, predictions]) => {
-                let recalculatedPctChange = ((predictions.avg - predictions.last_close) / predictions.last_close) * 100;
-                newPctChanges[ticker] = recalculatedPctChange;
-                totalPercentageChange += Math.exp(Math.abs(recalculatedPctChange));
+                let pctChange = ((predictions.avg - predictions.last_close) / predictions.last_close) * 100;
+                weights[ticker] = Math.exp(Math.abs(pctChange)); // Exponential of the absolute percentage change
+                sumOfWeights += weights[ticker];
             });
 
+            // Normalize and apply caps
+            Object.entries(weights).forEach(([ticker, weight]) => {
+                let allocation = (weight / sumOfWeights) * totalCapital; // Normalize based on total weight
+                if (allocation > maxAllocationPerTicker) {
+                    excessCapital += allocation - maxAllocationPerTicker; // Calculate excess
+                    allocations[ticker] = maxAllocationPerTicker; // Cap the allocation
+                } else {
+                    allocations[ticker] = allocation;
+                    totalWeightForUncapped += weight; // Sum weights for uncapped allocations
+                }
+            });
+
+            // Redistribute excess capital proportionally to uncapped tickers
+            if (excessCapital > 0) {
+                Object.keys(allocations).forEach(ticker => {
+                    if (allocations[ticker] < maxAllocationPerTicker) {
+                        // Only redistribute to tickers that were not initially capped
+                        let additionalAllocation = (weights[ticker] / totalWeightForUncapped) * excessCapital;
+                        allocations[ticker] += additionalAllocation; // Add proportion of excess
+                    }
+                });
+            }
+
+            // Calculate volumes and update UI
             Object.entries(response).forEach(([ticker, predictions]) => {
-                let absPctChange = Math.abs(newPctChanges[ticker]);
-                let weight = Math.exp(absPctChange) / totalPercentageChange;
-                allocations[ticker] = weight * 100;
-                let dollarAmount = weight * totalCapital;
-                dollarAllocations[ticker] = dollarAmount.toFixed(2);
+                let dollarAmount = allocations[ticker];
                 let price = parseFloat(predictions.current_price);
-                let volume = calculateVolume(price, dollarAmount);
+                let volume = calculateVolume(ticker, price, dollarAmount);
+                let cleanTicker = ticker.replace(/\.\w+$/, ''); // Removes any exchange suffix like .NAS or .NYSE
+                let pctChange = ((predictions.avg - predictions.last_close) / predictions.last_close) * 100;
 
-                let cleanTicker = ticker.split('.')[0];
-                $(`#volume-${cleanTicker}`).text(volume);
-                // Save trading data
-                tradingData[ticker] = {
-                    symbol: ticker,
-                    volume: volume,
-                    direction: newPctChanges[ticker] >= 0 ? 'buy' : 'sell'
-                };
-                $(`#lstmPrediction-${cleanTicker}`).text(predictions.lstm ? predictions.lstm.toFixed(3) : 'N/A');
-                $(`#gbmPrediction-${cleanTicker}`).text(predictions.gbm ? predictions.gbm.toFixed(3) : 'N/A');
-                $(`#avgPrediction-${cleanTicker}`).text(predictions.avg ? predictions.avg.toFixed(3) : 'N/A');
-                $(`#lastClose-${cleanTicker}`).text(predictions.last_close ? predictions.last_close.toFixed(2) : 'N/A');
-                $(`#pctChange-${cleanTicker}`).text(newPctChanges[ticker] ? newPctChanges[ticker].toFixed(2) + '%' : 'N/A');
-                $(`#allocation-${cleanTicker}`).text(allocations[ticker] ? allocations[ticker].toFixed(2) + '%' : 'N/A');
-                $(`#dollarAllocation-${cleanTicker}`).text('$' + dollarAllocations[ticker]);
-
+                updateUI(cleanTicker, predictions, dollarAmount, volume, pctChange, totalCapital);
             });
-            $('#TradeStockBtn').prop('disabled', false); // Enable trade button after data is loaded
+
+            $('#TradeStockBtn').prop('disabled', false); // Enable trade button
         },
         error: function(xhr, status, error) {
             console.error('Error executing ML predictions:', error);
@@ -154,6 +177,16 @@ $('#ExecuteMLBtn').click(function() {
     });
 });
 
+function updateUI(ticker, predictions, allocation, volume, pctChange, totalCapital) {
+    $(`#lstmPrediction-${ticker}`).text(predictions.lstm ? predictions.lstm.toFixed(3) : 'N/A');
+    $(`#gbmPrediction-${ticker}`).text(predictions.gbm ? predictions.gbm.toFixed(3) : 'N/A');
+    $(`#avgPrediction-${ticker}`).text(predictions.avg ? predictions.avg.toFixed(3) : 'N/A');
+    $(`#lastClose-${ticker}`).text(predictions.last_close ? predictions.last_close.toFixed(2) : 'N/A');
+    $(`#pctChange-${ticker}`).text(pctChange.toFixed(2) + '%');
+    $(`#allocation-${ticker}`).text((allocation / totalCapital * 100).toFixed(2) + '%');
+    $(`#dollarAllocation-${ticker}`).text('$' + allocation.toFixed(2));
+    $(`#volume-${ticker}`).text(volume);
+}
 
 
 $('#GetPredictionsBtn').click(function() {
