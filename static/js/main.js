@@ -93,23 +93,34 @@ function calculateVolume(ticker, price, dollarAllocation) {
     console.log(`Calculating volume for ${ticker} with price: ${price}, dollarAllocation: ${dollarAllocation}`);
     if (price <= 0 || isNaN(price)) {
         console.error('Invalid price detected:', price);
-        return 0;  // Default to 0 or an appropriate error handling
+        return 0; // Default to 0 or an appropriate error handling
     }
 
-    // Determine volume based on ticker type
     let volume = 0;
+    let minimumVolume;
+
     if (ticker.endsWith('.NAS') || ticker.endsWith('.NYSE')) {
-        // For stocks, where 0.1 volume = price/10
-        volume = (dollarAllocation / (price / 10)) * 0.1;
-    } else if (['SEKJPY', 'EURNOK', 'EURUSD'].includes(ticker)) {
-        // For forex pairs, where 0.01 minimum and = price x 1000
-        volume = (dollarAllocation * 1000) / price;
+        // For stocks, calculate volume as dollar allocation divided by the stock price.
+        volume = dollarAllocation / price;
+        minimumVolume = 0.1;
+        if (volume < minimumVolume) {
+            volume = 0; // Set to 0 if the allocation cannot purchase the minimum volume
+        }
+    } else {
+        // For forex pairs, calculate volume as dollar allocation divided by the price multiplied by 1000,
+        // then divide the result by 100 to adjust the volume scaling.
+        volume = (dollarAllocation / (price * 1000)) / 100;
+        minimumVolume = 0.01;
+        if (volume < minimumVolume) {
+            if (dollarAllocation >= price * 1000 * minimumVolume) {
+                volume = minimumVolume; // If feasible, set to minimum volume
+            } else {
+                volume = 0; // If not feasible, set volume to 0
+            }
+        }
     }
 
-    // Adjust volume to meet minimums
-    let minimumVolume = ticker.endsWith('.NAS') || ticker.endsWith('.NYSE') ? 0.1 : 0.01;
-    volume = Math.max(volume, minimumVolume);
-    volume = volume.toFixed(2); // Adjust decimal places as necessary
+    volume = parseFloat(volume.toFixed(2)); // Format volume to two decimal places
     console.log(`Adjusted volume calculated: ${volume}`);
     return volume;
 }
@@ -128,32 +139,34 @@ $('#ExecuteMLBtn').click(function() {
             let totalWeightForUncapped = 0;
             let sumOfWeights = 0;
 
+            // Reset tradingData each time predictions are executed
+            tradingData = {};
+
             // Calculate weights and initial allocations
             Object.entries(response).forEach(([ticker, predictions]) => {
                 let pctChange = ((predictions.avg - predictions.last_close) / predictions.last_close) * 100;
-                weights[ticker] = Math.exp(Math.abs(pctChange)); // Exponential of the absolute percentage change
+                weights[ticker] = Math.exp(Math.abs(pctChange));
                 sumOfWeights += weights[ticker];
             });
 
             // Normalize and apply caps
             Object.entries(weights).forEach(([ticker, weight]) => {
-                let allocation = (weight / sumOfWeights) * totalCapital; // Normalize based on total weight
+                let allocation = (weight / sumOfWeights) * totalCapital;
                 if (allocation > maxAllocationPerTicker) {
-                    excessCapital += allocation - maxAllocationPerTicker; // Calculate excess
-                    allocations[ticker] = maxAllocationPerTicker; // Cap the allocation
+                    excessCapital += allocation - maxAllocationPerTicker;
+                    allocations[ticker] = maxAllocationPerTicker;
                 } else {
                     allocations[ticker] = allocation;
-                    totalWeightForUncapped += weight; // Sum weights for uncapped allocations
+                    totalWeightForUncapped += weight;
                 }
             });
 
-            // Redistribute excess capital proportionally to uncapped tickers
+            // Redistribute excess capital
             if (excessCapital > 0) {
                 Object.keys(allocations).forEach(ticker => {
                     if (allocations[ticker] < maxAllocationPerTicker) {
-                        // Only redistribute to tickers that were not initially capped
                         let additionalAllocation = (weights[ticker] / totalWeightForUncapped) * excessCapital;
-                        allocations[ticker] += additionalAllocation; // Add proportion of excess
+                        allocations[ticker] += additionalAllocation;
                     }
                 });
             }
@@ -163,13 +176,21 @@ $('#ExecuteMLBtn').click(function() {
                 let dollarAmount = allocations[ticker];
                 let price = parseFloat(predictions.current_price);
                 let volume = calculateVolume(ticker, price, dollarAmount);
-                let cleanTicker = ticker.replace(/\.\w+$/, ''); // Removes any exchange suffix like .NAS or .NYSE
+                let cleanTicker = ticker.replace(/\.\w+$/, ''); // Remove exchange suffix
                 let pctChange = ((predictions.avg - predictions.last_close) / predictions.last_close) * 100;
+
+                // Populate tradingData with necessary details for trading
+                tradingData[ticker] = {
+                    symbol: ticker,
+                    volume: volume,
+                    direction: pctChange >= 0 ? 'buy' : 'sell', // Example logic
+                    price: price
+                };
 
                 updateUI(cleanTicker, predictions, dollarAmount, volume, pctChange, totalCapital);
             });
 
-            $('#TradeStockBtn').prop('disabled', false); // Enable trade button
+            $('#TradeStockBtn').prop('disabled', false); // Enable trade button after data is populated
         },
         error: function(xhr, status, error) {
             console.error('Error executing ML predictions:', error);
@@ -250,48 +271,6 @@ document.getElementById('AccountBtn').addEventListener('click', function() {
 });
 
 let predictionData = {};
-
-
-// Function to execute trades
-function executeTrades() {
-    // Filter out tickers with non-numeric prediction values
-    let validPredictionData = {};
-    for (let [ticker, value] of Object.entries(predictionData)) {
-        if (!isNaN(value)) {  // Check if the value is numeric
-            validPredictionData[ticker] = value;
-        } else {
-            console.error(`Skipping trade for ${ticker} due to invalid prediction value: ${value}`);
-        }
-    }
-
-    return fetch('/execute_lstm_trades', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ predictionValues: validPredictionData }),
-    })
-    .then(response => response.json())
-    .then(data => console.log('Trade Execution Response:', data))
-    .catch((error) => console.error('Error executing trades:', error));
-}
-
-function getSelectedStocks() {
-    let selectedStocks = [];
-    // Iterate over each dropdown item and extract the symbol
-    $('.dropdown-menu .dropdown-item').each(function() {
-        selectedStocks.push($(this).data('symbol'));
-    });
-    return selectedStocks;
-}
-
-function getSelectedForex() {
-    let selectedForex = [];
-    // Iterate over each dropdown item and extract the symbol
-    $('.dropdown-menu .dropdown-item-forex').each(function() {
-        selectedForex.push($(this).data('symbol'));
-    });
-    return selectedForex;
-}
-
 
 $('#TradeStockBtn').click(function() {
     console.log('Trade button clicked');
