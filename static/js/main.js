@@ -60,24 +60,27 @@ function getPredictions(ticker) {
 
 
 $(document).ready(function() {
+    updateChartAndButtonText("Choose Stock Instrument", "BTCUSD");
     // Handle dropdown item click
     $(document).on('click', '.dropdown-item-stock', function() {
         var symbol = $(this).data('symbol');
         var text = $(this).text();
-        updateChartAndButtonText(text, symbol, 'dropdown-item-stock');
+        updateChartAndButtonText("Choose Stock Instrument", symbol, 'dropdown-item-stock');
     });
 
 // For forex dropdown
+
+
+    // Initialize with a default symbol, if needed
+
+});
+$(document).ready(function() {
     $(document).on('click', '.dropdown-item-forex', function() {
         var symbol = $(this).data('symbol');
         var text = $(this).text();
-        updateChartAndButtonText(text, symbol, 'dropdown-item-forex');
+        updateChartAndButtonText("Choose Forex Instrument", symbol, 'dropdown-item-forex');
     });
-
-    // Initialize with a default symbol, if needed
-    // updateChartAndButtonText("Choose Stock Instrument", "BTCUSD");
 });
-
 function calculateVolume(ticker, price, dollarAllocation) {
     console.log(`Calculating volume for ${ticker} with price: ${price}, dollarAllocation: ${dollarAllocation}`);
     if (price <= 0 || isNaN(price)) {
