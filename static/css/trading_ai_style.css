@@ -120,6 +120,13 @@ body{
     flex: 1; /* Allows each child to take equal width */
     margin: 5px; /* Optional: Adds some space between the sliders */
 }
+.action-row {
+    display: flex;
+    justify-content: space-between; /* Ensures the children are evenly spaced */
+    align-items: center; /* Vertically aligns the items in the middle */
+    /*flex-wrap: wrap; !* Allows items to wrap onto the next line if not enough space *!*/
+    gap: 40px;
+}
 
 .scan-container {
     display: flex;
