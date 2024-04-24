@@ -50,6 +50,5 @@ def get_top_10_momentum_stocks():
                             ['HQM Score']])
 
     return top_10_hqm_stocks.index.tolist()
-
-top_10_momentum_stocks = get_top_10_momentum_stocks()
-print("Top 10 Momentum Stocks:", top_10_momentum_stocks)
+# top_10_momentum_stocks = get_top_10_momentum_stocks()
+# print("Top 10 Momentum Stocks:", top_10_momentum_stocks)

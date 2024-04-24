@@ -61,32 +61,21 @@ function getPredictions(ticker) {
 
 $(document).ready(function() {
     // Handle dropdown item click
-    $(document).on('click', '.dropdown-item .dropdown-item-stock', function() {
+    $(document).on('click', '.dropdown-item-stock', function() {
         var symbol = $(this).data('symbol');
         var text = $(this).text();
-        updateChartAndButtonText(text, symbol);
+        updateChartAndButtonText(text, symbol, 'dropdown-item-stock');
     });
 
+// For forex dropdown
     $(document).on('click', '.dropdown-item-forex', function() {
         var symbol = $(this).data('symbol');
         var text = $(this).text();
-        updateChartAndButtonText(text, symbol);
+        updateChartAndButtonText(text, symbol, 'dropdown-item-forex');
     });
 
     // Initialize with a default symbol, if needed
-    updateChartAndButtonText("Choose Stock Instrument", "BTCUSD");
-});
-
-$(document).ready(function() {
-    // Handle dropdown item click
-    $(document).on('click', '.dropdown-item-forex', function() {
-        var symbol = $(this).data('symbol');
-        var text = $(this).text();
-        updateChartAndButtonText(text, symbol);
-    });
-
-    // Initialize with a default symbol, if needed
-    updateChartAndButtonText("Choose Forex Instrument", "BTCUSD");
+    // updateChartAndButtonText("Choose Stock Instrument", "BTCUSD");
 });
 
 function calculateVolume(ticker, price, dollarAllocation) {
@@ -380,7 +369,7 @@ $(document).ready(function() {
 
     document.addEventListener('DOMContentLoaded', function() {
         // Attach event listeners to newly added dropdown items
-        document.querySelectorAll('.dropdown-item-forex').forEach(item => {
+        document.querySelectorAll('.dropdown-item-forex .dropdown-item-stock').forEach(item => {
             item.addEventListener('click', function() {
                 const symbol = this.getAttribute('data-symbol');
                 const text = this.text;
@@ -397,7 +386,7 @@ $(document).ready(function() {
         updateChartAndButtonText(text, symbol);
     });
 
-    $(document).on('click', '.dropdown-item-forex', function() {
+    $(document).on('click', '.dropdown-item-forex .dropdown-item-stock', function() {
         var text = $(this).text(); // Get the text of the clicked item
         var symbol = $(this).attr('data-symbol'); // Get the symbol from the data-symbol attribute
 
@@ -417,7 +406,12 @@ $(document).ready(function() {
             },
             body: JSON.stringify({ 'user_input': userInput }),
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+            }
+            return response.json();
+        })
         .then(data => {
             //debug
             console.log("Received data:", data); // Log the received data
@@ -457,7 +451,7 @@ $(document).ready(function() {
                 progressBar.style.width = width + '%';
                 progressPercentage.textContent = width + '%';
             }
-        }, 200); // Update the progress every 125 milliseconds, so it matches the process on terminal
+        }, 500); // Update the progress every 125 milliseconds, so it matches the process on terminal
 
         fetch('/scan-market')
             .then(response => response.json())

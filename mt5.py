@@ -250,7 +250,7 @@ def rsi_signal(data, overbought_level=70, oversold_level=30):
 def fetch_historical_data(ticker, start_date, end_date):
     rates = mt.copy_rates_range(ticker, mt.TIMEFRAME_D1, start_date, end_date)
     if rates is None or len(rates) == 0:
-        print(f"No data for {ticker}")
+        print(f"No data for y {ticker}")
         return None
     data = pd.DataFrame(rates)
     data['time'] = pd.to_datetime(data['time'], unit='s')
@@ -272,7 +272,7 @@ def fetch_historical_data_yf(ticker, start_date, end_date):
     data = yf.download(ticker, start=start_date.strftime('%Y-%m-%d'), end=end_date.strftime('%Y-%m-%d'))
 
     if data.empty:
-        print(f"No data for {ticker}")
+        print(f"No data for x {ticker}")
         return None
 
     data.reset_index(inplace=True)
@@ -316,10 +316,6 @@ def get_top_10_momentum_stocks():
                             ['HQM Score']])
 
     return top_10_hqm_stocks.index.tolist()
-
-
-# top_10_momentum_stocks = get_top_10_momentum_stocks()
-# print("Top 10 Momentum Stocks:", top_10_momentum_stocks)
 
 
 def get_top_10_momentum_forex():

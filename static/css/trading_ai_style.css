@@ -106,6 +106,21 @@ body{
 }
 /* End of chart styles */
 
+.scan-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.scan-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.scan-section .btn, .scan-section .progress {
+    flex-basis: 49%; /* Adjust based on your design needs */
+}
+
 /* Start of top left sector styles */
 .top-left-sector {
     display: flex;

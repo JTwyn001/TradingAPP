@@ -17,6 +17,8 @@ import numpy as np  # The Numpy numerical computing library
 import pandas as pd  # The Pandas data science library
 import pandas_ta as ta
 from flask import jsonify, abort
+from flask import Flask
+from flask_cors import CORS
 import requests  # The requests library for HTTP requests in Python
 import xlsxwriter  # The XlsxWriter library for
 import math  # The Python math module
@@ -54,7 +56,7 @@ mt.login(login, password, server)
 openai.api_key = os.getenv("OPENAI_API_KEY")
 # Initialize the Flask app and set the template folder
 app = Flask(__name__, static_folder='static', template_folder='templates')
-# CORS(app)
+CORS(app)
 # Set a secret key for session handling
 app.secret_key = 'algotradingproject'
 

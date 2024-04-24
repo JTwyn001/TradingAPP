@@ -30,23 +30,31 @@
 <div class="container">
     <div class=" ">
         <div class="top-left-sector justify-content-center">
-            <button id="ScanMarketBtn" class="btn btn-primary glow-on-hover scan-market-button w-100 my-2">SCAN STOCK MARKET</button>
-            <div class="progress" id="loadingBar" style="height: 10px;">
-                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%">
-                    <span id="progressPercentage">0%</span>
+            <div style="display: flex; justify-content: space-between; gap: 20px;">
+
+                <!-- Button and loading bar for the stock market -->
+                <div style="flex-grow: 1;">
+                    <button id="ScanMarketBtn" class="btn btn-primary glow-on-hover scan-market-button w-100 my-2">SCAN STOCK MARKET</button>
+                    <div class="progress" id="loadingBar" style="height: 10px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%">
+                            <span id="progressPercentage">0%</span>
+                        </div>
+                    </div>
+                    <div id="scan-marketMessage" style="display: none; color: green; font-weight: bold;">Successfully filtered</div>
                 </div>
-            </div>
 
-            <div id="scan-marketMessage" style="display: none; color: green; font-weight: bold;">Successfully filtered highest momentum stocks in S&P 500 to dropdown</div>
-
-            <button id="ScanForexBtn" class="btn btn-primary glow-on-hover scan-market-button w-100 my-2">SCAN FOREX MARKET</button>
-            <div class="progress" id="forexloadingBar" style="height: 10px;">
-                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%">
-                    <span id="forexprogressPercentage">0%</span>
+                <!-- Button and loading bar for the forex market -->
+                <div style="flex-grow: 1;">
+                    <button id="ScanForexBtn" class="btn btn-primary glow-on-hover scan-market-button w-100 my-2">SCAN FOREX MARKET</button>
+                    <div class="progress" id="forexloadingBar" style="height: 10px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%">
+                            <span id="forexprogressPercentage">0%</span>
+                        </div>
+                    </div>
+                    <div id="scan-forexMarketMessage" style="display: none; color: green; font-weight: bold;">Successfully filtered</div>
                 </div>
-            </div>
-            <div id="scan-forexMarketMessage" style="display: none; color: green; font-weight: bold;">Successfully filtered highest momentum forex pairs to dropdown</div>
 
+            </div>
 
             <div class="checkbox-container d-flex">
                 <!-- Checkbox for LSTM -->
@@ -71,41 +79,36 @@
 
             <div id="predictionMessage" style="display: none; color: green; font-weight: bold;">Successfully used lstm to predict recommendation</div>
 
-            <div class="dropdown w-100 my-2">
-                <!-- Modified button with an ID -->
-                <button class="btn btn-secondary glow-on-hover scan-market-button w-100" type="button" id="dropdownMenuStockButton"
-                        data-bs-toggle="dropdown" aria-expanded="false">
-                    Choose Stock Instrument
-                    <i class="bi bi-caret-down-fill"></i>
-                </button>
-                <!-- Placeholder for displaying the rankings -->
-                <ul class="dropdown-menu w-100" aria-labelledby="dropdownMenuStockButton">
-                    <!-- Dropdown title -->
-                    <li><span class="dropdown-item disabled">Top 10 Scanned Instruments</span></li>
-                    <!-- Added onClick event to each dropdown item -->
-                    {% for stock in top_10_stocks %}
-                    <li><a class="dropdown-item dropdown-item-stock" href="#" data-symbol="{{ stock }}">{{ stock }}</a></li>
-                    {% endfor %}
-                </ul>
+            <div style="display: flex; justify-content: space-between; gap: 20px;">
+
+                <div class="dropdown my-2" style="flex-grow: 1;">
+                    <button class="btn btn-secondary glow-on-hover scan-market-button w-100" type="button" id="dropdownMenuStockButton" data-bs-toggle="dropdown" aria-expanded="false">
+                        Choose Stock Instrument
+                        <i class="bi bi-caret-down-fill"></i>
+                    </button>
+                    <ul class="dropdown-menu w-100" aria-labelledby="dropdownMenuStockButton">
+                        <li><span class="dropdown-item dropdown-item-stock disabled">Top 10 Scanned Stocks Instruments</span></li>
+                        {% for stock in top_10_stocks %}
+                        <li><a class="dropdown-item dropdown-item-stock" href="#" data-symbol="{{ stock }}">{{ stock }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <div class="dropdown my-2" style="flex-grow: 1;">
+                    <button class="btn btn-secondary glow-on-hover scan-market-button w-100" type="button" id="dropdownMenuForexButton" data-bs-toggle="dropdown" aria-expanded="false">
+                        Choose Forex Instrument
+                        <i class="bi bi-caret-down-fill"></i>
+                    </button>
+                    <ul class="dropdown-menu w-100" aria-labelledby="dropdownMenuForexButton">
+                        <li><span class="dropdown-item dropdown-item-forex disabled">Top 10 Scanned Forex Instruments</span></li>
+                        {% for ticker in top_10_forex %}
+                        <li><a class="dropdown-item dropdown-item-forex" href="#" data-symbol="{{ ticker }}">{{ ticker }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
             </div>
 
-            <div class="dropdown w-100 my-2">
-                <!-- Modified button with an ID -->
-                <button class="btn btn-secondary glow-on-hover scan-market-button w-100" type="button" id="dropdownMenuForexButton"
-                        data-bs-toggle="dropdown" aria-expanded="false">
-                    Choose Instrument
-                    <i class="bi bi-caret-down-fill"></i>
-                </button>
-                <!-- Placeholder for displaying the rankings -->
-                <ul class="dropdown-menu w-100" aria-labelledby="dropdownMenuForexButton">
-                    <!-- Dropdown title -->
-                    <li><span class="dropdownitem dropdown-item-forex disabled">Top 10 Scanned Forex Instruments</span></li>
-                    <!-- Added onClick event to each dropdown item -->
-                    {% for ticker in top_10_forex %}
-                    <li><a class="dropdown-item dropdown-item-forex" href="#" data-symbol="{{ ticker }}">{{ ticker }}</a></li>
-                    {% endfor %}
-                </ul>
-            </div>
 
             <div class="ml-prediction-container col-md-12">
                 <div class="row d-flex justify-content-center">
