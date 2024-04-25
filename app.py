@@ -410,26 +410,24 @@ def load_latest_gbm_model_for_ticker(ticker_symbol, model_dir='./gbm_models'):
     return model
 
 
-# Function to load the latest model and scaler
-def load_latest_model_and_scaler(model_dir='./models', scaler_dir='./scalers'):
-    model_files = [os.path.join(model_dir, f) for f in os.listdir(model_dir) if f.endswith('.h5')]
-    feature_scaler_files = [os.path.join(scaler_dir, f) for f in os.listdir(scaler_dir) if
-                            'feature_scaler' in f and f.endswith('.pkl')]
-    target_scaler_files = [os.path.join(scaler_dir, f) for f in os.listdir(scaler_dir) if
-                           'target_scaler' in f and f.endswith('.pkl')]
+def load_specific_model_and_scalers(model_dir='./models', scaler_dir='./scalers'):
+    model_filename = 'lstm_model_SPY_20240425_011025.keras'
+    feature_scaler_filename = 'feature_scaler_SPY_20240425_011025.pkl'
+    target_scaler_filename = 'target_scaler_SPY_20240425_011025.pkl'
 
-    # Ensure there are files before using max to avoid ValueError
-    latest_model_file = max(model_files, key=os.path.getctime) if model_files else None
-    latest_feature_scaler_file = max(feature_scaler_files, key=os.path.getctime) if feature_scaler_files else None
-    latest_target_scaler_file = max(target_scaler_files, key=os.path.getctime) if target_scaler_files else None
+    model_path = os.path.join(model_dir, model_filename)
+    feature_scaler_path = os.path.join(scaler_dir, feature_scaler_filename)
+    target_scaler_path = os.path.join(scaler_dir, target_scaler_filename)
 
-    # Load the latest files if they exist
-    model = load_model(latest_model_file) if latest_model_file else None
-    feature_scaler = joblib.load(latest_feature_scaler_file) if latest_feature_scaler_file else None
-    target_scaler = joblib.load(latest_target_scaler_file) if latest_target_scaler_file else None
+    if not os.path.exists(model_path) or not os.path.exists(feature_scaler_path) or not os.path.exists(target_scaler_path):
+        print("Specific model and scaler files not found.")
+        return None, None, None
+
+    model = load_model(model_path)
+    feature_scaler = joblib.load(feature_scaler_path)
+    target_scaler = joblib.load(target_scaler_path)
 
     return model, feature_scaler, target_scaler
-
 
 def preprocess_data_for_lstm(ticker, feature_scaler):
     if not mt.initialize():
@@ -491,45 +489,32 @@ def preprocess_data_for_lstm(ticker, feature_scaler):
 prediction_values = {}
 
 
-# Function for LSTM prediction
 @app.route('/get_predictions', methods=['POST'])
 def get_predictions():
-    global prediction_values
-    # Extract the selected stocks from the request
     selected_stocks = request.json['selectedStocks']
-    # Load the latest model and scaler dynamically
-    model, feature_scaler, target_scaler = load_latest_model_and_scaler()  # Assuming you have separate scalers for
-    # features and target
+    model, feature_scaler, target_scaler = load_specific_model_and_scalers()
 
-    predictions = []
+    if not model or not feature_scaler or not target_scaler:
+        return jsonify({"error": "Model or scalers could not be loaded"}), 500
+
+    predictions = {}
     for ticker in selected_stocks:
         try:
-            prepared_data = preprocess_data_for_lstm(ticker, feature_scaler)  # Pass feature_scaler here
+            prepared_data = preprocess_data_for_lstm(ticker, feature_scaler)  # Ensure this function is applicable for all stocks
             if prepared_data is None:
                 print(f"Prepared data for {ticker} is None.")
                 continue
 
-            # Get predictions from the model
             predicted_change_scaled = model.predict(prepared_data)
             predicted_change = target_scaler.inverse_transform(predicted_change_scaled.reshape(-1, 1))[0][0]
-
-            # Store the ticker and its prediction
-            predictions.append((ticker, predicted_change))
-
-            # Sort the predictions based on the predicted change value
-            sorted_predictions = sorted(predictions, key=lambda x: x[1], reverse=True)
-
-            # Convert to a dictionary for JSON response
-            sorted_predictions = {ticker: rank for rank, (ticker, _) in enumerate(sorted_predictions, start=1)}
-            print(f"Predicted change for {ticker}: {predicted_change}")
+            # Convert numpy float32 to Python float
+            predictions[ticker] = float(predicted_change)
         except Exception as e:
             print(f"Exception processing {ticker}: {e}")
+            predictions[ticker] = None  # It's a good practice to handle exceptions such that your service continues to run
 
-    # Sort the predictions based on the predicted change value
-    sorted_predictions = sorted(predictions, key=lambda x: x[1], reverse=True)
-    ranked_predictions = {ticker: rank for rank, (ticker, _) in enumerate(sorted_predictions, start=1)}
+    return jsonify(predictions)
 
-    return jsonify(sorted_predictions)
 
 def check_existing_positions(symbol):
     """Checks if there are open positions for a given symbol."""

@@ -60,18 +60,13 @@ function getPredictions(ticker) {
 
 
 $(document).ready(function() {
-    updateChartAndButtonText("Choose Stock Instrument", "BTCUSD");
+    updateChartAndButtonText("Choose Instrument", "BTCUSD");
     // Handle dropdown item click
     $(document).on('click', '.dropdown-item-stock', function() {
         var symbol = $(this).data('symbol');
         var text = $(this).text();
         updateChartAndButtonText("Choose Stock Instrument", symbol, 'dropdown-item-stock');
     });
-
-// For forex dropdown
-
-
-    // Initialize with a default symbol, if needed
 
 });
 $(document).ready(function() {
@@ -203,44 +198,44 @@ function updateUI(ticker, predictions, allocation, volume, pctChange, totalCapit
 
 
 $('#GetPredictionsBtn').click(function() {
-    var selectedStocks = [];
-    if ($('#lstmCheckbox').is(':checked')) {
-        selectedStocks = $('.dropdown-menu .dropdown-item').map(function() {
-            return $(this).data('symbol');
-        }).get();
+    var selectedStocks = $('.dropdown-menu .dropdown-item').map(function() {
+        return $(this).data('symbol');
+    }).get();
+
+    // Determine which model to use based on checkbox state
+    var modelType = 'LSTM'; // Default to LSTM
+    if ($('#policy-gradCheckbox').is(':checked')) {
+        modelType = 'GBM'; // Use GBM if this checkbox is checked
     }
 
-    // Send the selected stocks to the backend for predictions
+    // Send the selected stocks and model type to the backend for predictions
     $.ajax({
         url: '/get_predictions',
         type: 'POST',
         contentType: 'application/json',
-        data: JSON.stringify({ selectedStocks: selectedStocks }),
+        data: JSON.stringify({ selectedStocks: selectedStocks, modelType: modelType }),
         success: function(response) {
-            console.log('Response from server:', response); // Add this line to log the response
-            // Clear existing recommendations
+            console.log('Response from server:', response);
+            // Update dropdown items with predictions
             $('.dropdown-menu .dropdown-item').each(function() {
-                $(this).text($(this).data('symbol')).removeClass('buy-prediction sell-prediction');
-            });
-            // Then update dropdown items with predictions
-            for (var ticker in response) {
-                var prediction = response[ticker];
-                var $dropdownItem = $('a[data-symbol="' + ticker + '"]');
-                // Update the text
-                $dropdownItem.text(ticker + ' - ' + prediction);
-                // Add color based on the prediction
-                if (prediction === 'BUY') {
-                    $dropdownItem.addClass('buy-prediction');
-                } else if (prediction === 'SELL') {
-                    $dropdownItem.addClass('sell-prediction');
+                var symbol = $(this).data('symbol');
+                var prediction = response[symbol];
+                if (prediction !== undefined) {
+                    $(this).text(symbol + ' - ' + prediction.toFixed(2)); // Assuming prediction is a number
+                    if (prediction < 200) {
+                        $(this).addClass('red-prediction').removeClass('blue-prediction');
+                    } else {
+                        $(this).addClass('blue-prediction').removeClass('red-prediction');
+                    }
+                } else {
+                    $(this).removeClass('blue-prediction red-prediction');
                 }
-                // Find the corresponding dropdown item and update its text
-                // $('a[data-symbol="' + ticker + '"]').text(ticker + ' -   ' + '     ' + prediction);
-            }
+            });
             document.getElementById('predictionMessage').style.display = 'block';
         },
         error: function(error) {
             console.log('Error getting predictions:', error);
+            // Optionally handle the error
         }
     });
 });
