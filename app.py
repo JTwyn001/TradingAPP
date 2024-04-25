@@ -485,33 +485,91 @@ def preprocess_data_for_lstm(ticker, feature_scaler):
         return None
 
 
+def preprocess_data_for_gbm_prediction(ticker):
+    # Download historical data for the ticker
+    data = yf.download(ticker, start="2010-01-01", end="2024-04-01")
+
+    # Compute RSI
+    data['RSI'] = ta.rsi(data['Close'], length=14)
+
+    # Exponential Moving Average
+    data['EMA20'] = data['Close'].ewm(span=20, adjust=False).mean()
+
+    # Moving Average Convergence Divergence
+    macd = ta.macd(data['Close'])  # This returns a DataFrame
+    data['MACD'] = macd['MACD_12_26_9']
+
+    # Simple Moving Average
+    data['SMA50'] = data['Close'].rolling(window=50).mean()
+
+    # Average True Range
+    data['ATR'] = ta.atr(data['High'], data['Low'], data['Close'], length=14)
+
+    # Ensure all columns needed are calculated before dropping NA values
+    data.dropna(inplace=True)
+
+    # Prepare the feature array; ensure the order and columns match the model's training data
+    features = data[['Close', 'RSI', 'EMA20', 'MACD', 'SMA50', 'ATR']].values[-1]  # Get the most recent data point as input
+
+    return features.reshape(1, -1)  # Reshape for a single prediction
+
+def load_and_predict_with_gbm(ticker, model_filename):
+    # Load the pre-trained GBM model
+    try:
+        model = joblib.load(model_filename)
+    except FileNotFoundError:
+        print("Model file not found.")
+        return None
+
+    # Preprocess the data for the given ticker
+    features = preprocess_data_for_gbm_prediction(ticker)
+
+    if features is not None:
+        # Make the prediction
+        predicted_change = model.predict(features)
+        return predicted_change[0]  # Return the predicted value
+    else:
+        print(f"No data available to make a prediction for {ticker}.")
+        return None
+
+
 # Global dictionary to store prediction values
 prediction_values = {}
 
 
 @app.route('/get_predictions', methods=['POST'])
 def get_predictions():
-    selected_stocks = request.json['selectedStocks']
-    model, feature_scaler, target_scaler = load_specific_model_and_scalers()
+    data = request.get_json()
+    selected_stocks = data['selectedStocks']
+    model_type = data['modelType']  # 'LSTM' or 'GBM'
 
-    if not model or not feature_scaler or not target_scaler:
-        return jsonify({"error": "Model or scalers could not be loaded"}), 500
+    # Adjust the path for GBM model
+    if model_type == 'GBM':
+        model_path = 'C:\\Users\\tohye\\Documents\\Capstone\\TradingAPP\\gbm_models\\gbm_model_SPY_20240425_023925.joblib'
+        model = joblib.load(model_path)
+        preprocess = preprocess_data_for_gbm_prediction  # Assume this function is defined elsewhere
+    else:
+        model, feature_scaler, target_scaler = load_specific_model_and_scalers()  # Your LSTM setup
+        preprocess = lambda ticker: preprocess_data_for_lstm(ticker, feature_scaler)  # Adjust as needed for your LSTM
 
     predictions = {}
     for ticker in selected_stocks:
         try:
-            prepared_data = preprocess_data_for_lstm(ticker, feature_scaler)  # Ensure this function is applicable for all stocks
+            prepared_data = preprocess(ticker)
             if prepared_data is None:
                 print(f"Prepared data for {ticker} is None.")
                 continue
 
-            predicted_change_scaled = model.predict(prepared_data)
-            predicted_change = target_scaler.inverse_transform(predicted_change_scaled.reshape(-1, 1))[0][0]
-            # Convert numpy float32 to Python float
-            predictions[ticker] = float(predicted_change)
+            if model_type == 'GBM':
+                predicted_change = model.predict(prepared_data)[0]
+            else:
+                predicted_change_scaled = model.predict(prepared_data)
+                predicted_change = target_scaler.inverse_transform(predicted_change_scaled.reshape(-1, 1))[0][0]
+
+            predictions[ticker] = float(predicted_change)  # Convert numpy float32 to regular float for JSON serialization
         except Exception as e:
             print(f"Exception processing {ticker}: {e}")
-            predictions[ticker] = None  # It's a good practice to handle exceptions such that your service continues to run
+            predictions[ticker] = None
 
     return jsonify(predictions)
 

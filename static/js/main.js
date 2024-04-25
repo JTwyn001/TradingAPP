@@ -196,7 +196,6 @@ function updateUI(ticker, predictions, allocation, volume, pctChange, totalCapit
     $(`#volume-${ticker}`).text(volume);
 }
 
-
 $('#GetPredictionsBtn').click(function() {
     var selectedStocks = $('.dropdown-menu .dropdown-item').map(function() {
         return $(this).data('symbol');
@@ -215,13 +214,12 @@ $('#GetPredictionsBtn').click(function() {
         contentType: 'application/json',
         data: JSON.stringify({ selectedStocks: selectedStocks, modelType: modelType }),
         success: function(response) {
-            console.log('Response from server:', response);
             // Update dropdown items with predictions
             $('.dropdown-menu .dropdown-item').each(function() {
                 var symbol = $(this).data('symbol');
                 var prediction = response[symbol];
                 if (prediction !== undefined) {
-                    $(this).text(symbol + ' - ' + prediction.toFixed(2)); // Assuming prediction is a number
+                    $(this).text(symbol + ' - ' + prediction.toFixed(2));
                     if (prediction < 200) {
                         $(this).addClass('red-prediction').removeClass('blue-prediction');
                     } else {
@@ -235,7 +233,6 @@ $('#GetPredictionsBtn').click(function() {
         },
         error: function(error) {
             console.log('Error getting predictions:', error);
-            // Optionally handle the error
         }
     });
 });
